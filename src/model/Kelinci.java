@@ -2,13 +2,13 @@ package model;
 
 import java.math.BigDecimal;
 
-public final class Kelinci extends Hewan {
+public final class Kelinci extends Pet {
     public Kelinci(String name) {
         super(name);
     }
 
     @Override
-    public PetType getType() {
+    public PetType getPetType() {
         return PetType.KELINCI;
     }
 

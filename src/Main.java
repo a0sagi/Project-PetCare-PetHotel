@@ -1,12 +1,12 @@
 import controller.BookingController;
 import database.BookingDAO;
-import model.Hewan;
+import model.Pet;
 import model.AnimalFactory;
-import model.PemesananHewan;
+import model.PetBooking;
 import model.PetType;
-import model.JenisLayanan;
+import model.ServiceType;
 import repository.BookingRepository;
-import service.LayananPemesanan;
+import service.BookingService;
 import view.PetCareMainFrame;
 
 import javax.swing.SwingUtilities;
@@ -26,7 +26,7 @@ public class Main {
 
     private static void launchGui(boolean databaseMode) {
         try {
-            LayananPemesanan service = new LayananPemesanan(
+            BookingService service = new BookingService(
                     new BookingRepository(), databaseMode ? new BookingDAO() : null);
             PetCareMainFrame frame = new PetCareMainFrame();
             new BookingController(frame, service);
@@ -41,18 +41,18 @@ public class Main {
     private static void runConsoleDemo() {
         BookingRepository repository = new BookingRepository();
         NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID"));
-        for (PetType type : PetType.values()) {
-            Hewan animal = AnimalFactory.create(type, "Contoh " + type.getLabel());
-            PemesananHewan booking = new PemesananHewan(
-                    type.ordinal() + 1,
+        for (PetType petType : PetType.values()) {
+            Pet animal = AnimalFactory.create(petType, "Contoh " + petType.getLabel());
+            PetBooking booking = new PetBooking(
+                    petType.ordinal() + 1,
                     "Pemilik Contoh",
                     812345678,
                     animal,
-                    JenisLayanan.BOARDING,
+                    ServiceType.BOARDING,
                     2);
             repository.addBooking(booking);
             System.out.printf("%s: tarif inap %s/hari, tagihan dua hari %s%n",
-                    animal.getType().getLabel(), currency.format(animal.getDailyRate()),
+                    animal.getPetType().getLabel(), currency.format(animal.getDailyRate()),
                     currency.format(booking.getTotalBill()));
         }
         System.out.println("Pencarian booking 1: "

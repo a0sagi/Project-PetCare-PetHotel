@@ -16,9 +16,10 @@ public enum PetType {
     }
 
     public static PetType fromLabel(String label) {
-        for (PetType type : values()) {
-            if (type.label.equalsIgnoreCase(label) || type.name().equalsIgnoreCase(label)) {
-                return type;
+        for (PetType petType : values()) {
+            if (petType.label.equalsIgnoreCase(label)
+                    || petType.name().equalsIgnoreCase(label)) {
+                return petType;
             }
         }
         throw new IllegalArgumentException("Jenis hewan tidak dikenal: " + label);

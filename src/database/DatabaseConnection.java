@@ -3,10 +3,14 @@ package database;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class DatabaseConnection {
+    private static final Logger LOGGER =
+            Logger.getLogger(DatabaseConnection.class.getName());
     private static final String URL =
-            "jdbc:mysql://localhost:3306/petcare_db?useSSL=false&serverTimezone=UTC";
+            "jdbc:mysql://localhost:3306/petcare_db";
     private static final String USER = "root";
     private static final String PASSWORD = "";
 
@@ -17,10 +21,20 @@ public final class DatabaseConnection {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException exception) {
-            throw new SQLException(
+            SQLException sqlException = new SQLException(
                     "Driver MySQL tidak ditemukan. Pastikan Connector/J ada di folder lib.",
                     exception);
+            LOGGER.log(Level.SEVERE, sqlException.getMessage(), sqlException);
+            throw sqlException;
         }
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+
+        try {
+            Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            LOGGER.info("Koneksi ke database petcare_db berhasil.");
+            return connection;
+        } catch (SQLException exception) {
+            LOGGER.log(Level.SEVERE, "Gagal terhubung ke database petcare_db.", exception);
+            throw exception;
+        }
     }
 }

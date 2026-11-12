@@ -4,11 +4,11 @@ public final class AnimalFactory {
     private AnimalFactory() {
     }
 
-    public static Hewan create(PetType type, String name) {
-        return switch (type) {
-            case KUCING -> new Kucing(name);
-            case ANJING -> new Anjing(name);
-            case KELINCI -> new Kelinci(name);
+    public static Pet create(PetType petType, String petName) {
+        return switch (petType) {
+            case KUCING -> new Kucing(petName);
+            case ANJING -> new Anjing(petName);
+            case KELINCI -> new Kelinci(petName);
         };
     }
 }
