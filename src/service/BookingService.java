@@ -72,8 +72,8 @@ public class BookingService {
 
     public PetBooking checkout(int idBooking) throws SQLException {
         PetBooking booking = requireBooking(idBooking);
-        if (booking.getStatus() != StatusPenitipan.PERAWATAN) {
-            throw new IllegalStateException("Majukan status ke Sedang Perawatan terlebih dahulu.");
+        if (booking.getStatus() != StatusPenitipan.SIAP_CHECKOUT) {
+            throw new IllegalStateException("Booking harus berstatus Siap Check-Out sebelum checkout.");
         }
         if (dao != null) {
             dao.checkout(booking);

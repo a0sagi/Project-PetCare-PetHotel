@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Jalankan Pet Care (GUI)",
+            "request": "launch",
+            "mainClass": "Main",
+            "encoding": "UTF-8"
+        },
+        {
+            "type": "java",
+            "name": "Jalankan Pet Care (GUI + MySQL)",
+            "request": "launch",
+            "mainClass": "Main",
+            "args": "--db",
+            "encoding": "UTF-8"
+        },
+        {
+            "type": "java",
+            "name": "Jalankan Pet Care (Demo CLI)",
+            "request": "launch",
+            "mainClass": "Main",
+            "args": "--demo",
+            "encoding": "UTF-8"
+        }
+    ]
+}

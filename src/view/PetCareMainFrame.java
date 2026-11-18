@@ -17,7 +17,7 @@ import java.util.Locale;
 public class PetCareMainFrame extends JFrame {
     private static final String[] TAB_NAMES = {
             "Ringkasan", "Data Pemilik", "Data Hewan", "Perawatan Hewan",
-            "Penitipan Hewan", "Pelunasan"
+            "Penitipan Hewan", "Tagihan"
     };
 
     private final JTextField idBookingField = new JTextField(16);
@@ -31,13 +31,16 @@ public class PetCareMainFrame extends JFrame {
     private final JComboBox<String> serviceBox =
             new JComboBox<>(new String[]{"Perawatan", "Penitipan", "Layanan Lengkap"});
     private final JComboBox<String> statusBox =
-            new JComboBox<>(new String[]{"Masuk", "Sedang Dirawat"});
+            new JComboBox<>(new String[]{
+                    "Check-In", "Sedang Dirawat", "Siap Check-Out", "Dibatalkan"
+            });
     private final JSpinner durationSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 365, 1));
     private final JLabel durationLabel = new JLabel("Durasi (hari)");
     private final JLabel statusLabel = new JLabel("Status");
     private final JButton addBookingButton = new JButton("Tambah Pemesanan");
     private final JButton updateDataButton = new JButton("Perbarui Data");
-    private final JButton checkoutButton = new JButton("Proses Pelunasan");
+    private final JButton checkoutButton = new JButton("Check Out");
+    private final JButton boardingCheckoutButton = new JButton("Check Out");
     private final JButton searchButton = new JButton("Cari");
     private final JButton deleteButton = new JButton("Hapus");
     private final JButton resetButton = new JButton("Atur Ulang");
@@ -50,10 +53,11 @@ public class PetCareMainFrame extends JFrame {
     private final JLabel hotelCount = new JLabel("0");
     private final JLabel checkoutCount = new JLabel("0");
     private final JTextArea checkoutInvoice = new JTextArea(
-            "Pilih pemesanan berstatus Sedang Dirawat, lalu tekan Proses Pelunasan untuk melihat rincian tagihan.");
+            "Pilih pemesanan berstatus Siap Check-Out, lalu tekan Check Out untuk melihat tagihan.");
 
     public PetCareMainFrame() {
         super("Pet Care & Hotel Management");
+        setCheckoutEnabled(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(12, 12));
         getRootPane().setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
@@ -98,7 +102,6 @@ public class PetCareMainFrame extends JFrame {
         toolbar.add(deleteButton);
         toolbar.add(statusLabel);
         toolbar.add(statusBox);
-        toolbar.add(checkoutButton);
         toolbar.add(resetButton);
         return toolbar;
     }
@@ -125,7 +128,7 @@ public class PetCareMainFrame extends JFrame {
             form.add(fields[row], constraints);
         }
         JLabel hint = new JLabel("<html>Isi data pemesanan, lalu tekan Tambah Pemesanan.<br>"
-                + "Pilih baris tabel untuk memperbarui status,<br>tagihan, atau proses pelunasan.</html>");
+                + "Pilih baris tabel untuk memperbarui status atau data.</html>");
         hint.setForeground(new Color(95, 107, 120));
         hint.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5));
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
@@ -167,7 +170,6 @@ public class PetCareMainFrame extends JFrame {
         boolean visible = isStatusManagementPage();
         statusLabel.setVisible(visible);
         statusBox.setVisible(visible);
-        checkoutButton.setVisible(isCheckoutActionPage());
         if (!visible) {
             statusBox.setEnabled(false);
         }
@@ -183,7 +185,15 @@ public class PetCareMainFrame extends JFrame {
             JLabel description = new JLabel(pageDescription(index));
             description.setBorder(BorderFactory.createEmptyBorder(6, 4, 2, 4));
             description.setForeground(new Color(95, 107, 120));
-            page.add(description, BorderLayout.NORTH);
+            if (index == 3 || index == 4) {
+                JPanel pageHeader = new JPanel(new BorderLayout());
+                pageHeader.add(description, BorderLayout.CENTER);
+                pageHeader.add(index == 3 ? checkoutButton : boardingCheckoutButton,
+                        BorderLayout.EAST);
+                page.add(pageHeader, BorderLayout.NORTH);
+            } else {
+                page.add(description, BorderLayout.NORTH);
+            }
         }
 
         JTable table = new JTable(tableModel);
@@ -234,7 +244,7 @@ public class PetCareMainFrame extends JFrame {
             case 2 -> "Daftar hewan dan pemilik yang terdaftar pada pemesanan.";
             case 3 -> "Layanan perawatan dan kebersihan hewan.";
             case 4 -> "Layanan penitipan dan penginapan hewan.";
-            case 5 -> "Pemesanan yang siap dilunasi dan yang sudah selesai.";
+            case 5 -> "Daftar tagihan dan pemesanan yang siap check out.";
             default -> "";
         };
     }
@@ -290,7 +300,7 @@ public class PetCareMainFrame extends JFrame {
                     }
                     if (selectedPage == 5
                             && !"Selesai".equals(entry.getStringValue(8))
-                            && !"Sedang Dirawat".equals(entry.getStringValue(8))) {
+                            && !"Siap Check-Out".equals(entry.getStringValue(8))) {
                         return false;
                     }
                     if (searchTerm.isEmpty()) {
@@ -325,10 +335,17 @@ public class PetCareMainFrame extends JFrame {
     }
     public boolean isCheckoutActionPage() {
         int selectedPage = pages.getSelectedIndex();
-        return selectedPage == 0 || selectedPage == 3 || selectedPage == 4;
+        return selectedPage == 3 || selectedPage == 4;
+    }
+    public void setCheckoutEnabled(boolean enabled) {
+        checkoutButton.setEnabled(enabled);
+        boardingCheckoutButton.setEnabled(enabled);
     }
     public void setUpdateDataEnabled(boolean enabled) { updateDataButton.setEnabled(enabled); }
     public JButton getCheckoutButton()               { return checkoutButton; }
+    public List<JButton> getCheckoutButtons() {
+        return List.of(checkoutButton, boardingCheckoutButton);
+    }
     public JButton getSearchButton()                 { return searchButton; }
     public JButton getDeleteButton()                 { return deleteButton; }
     public JButton getResetButton()                  { return resetButton; }

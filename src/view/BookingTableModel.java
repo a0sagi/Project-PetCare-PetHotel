@@ -18,7 +18,7 @@ public class BookingTableModel extends DefaultTableModel {
             "Boarding", "Penitipan",
             "Full Service", "Layanan Lengkap");
     private static final Map<String, String> STATUS_LABELS = Map.of(
-            "Check-In", "Masuk",
+            "Check-In", "Check-In",
             "Sedang Perawatan", "Sedang Dirawat",
             "Check-Out", "Selesai",
             "Dibatalkan", "Dibatalkan");

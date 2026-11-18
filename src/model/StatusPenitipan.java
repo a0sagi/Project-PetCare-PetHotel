@@ -2,8 +2,9 @@ package model;
 
 public enum StatusPenitipan {
     CHECK_IN("Check-In"),
-    PERAWATAN("Sedang Perawatan"),
-    CHECK_OUT("Check-Out"),
+    PERAWATAN("Sedang Dirawat"),
+    SIAP_CHECKOUT("Siap Check-Out"),
+    CHECK_OUT("Selesai"),
     DIBATALKAN("Dibatalkan");
 
     private final String label;
@@ -19,7 +20,8 @@ public enum StatusPenitipan {
     public StatusPenitipan next() {
         return switch (this) {
             case CHECK_IN -> PERAWATAN;
-            case PERAWATAN -> CHECK_OUT;
+            case PERAWATAN -> SIAP_CHECKOUT;
+            case SIAP_CHECKOUT -> CHECK_OUT;
             case CHECK_OUT, DIBATALKAN -> this;
         };
     }

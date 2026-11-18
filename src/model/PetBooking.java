@@ -54,12 +54,12 @@ public class PetBooking {
     }
 
     /**
-     * Menyelesaikan booking. Harus berstatus PERAWATAN sebelum checkout dilakukan.
+     * Menyelesaikan booking. Harus berstatus SIAP_CHECKOUT sebelum checkout dilakukan.
      */
     public void markCheckedOut() {
-        if (status != StatusPenitipan.PERAWATAN) {
+        if (status != StatusPenitipan.SIAP_CHECKOUT) {
             throw new IllegalStateException(
-                    "Booking harus berstatus Sedang Perawatan sebelum checkout.");
+                    "Booking harus berstatus Siap Check-Out sebelum checkout.");
         }
         totalBill = calculateTotalBill();
         status = StatusPenitipan.CHECK_OUT;

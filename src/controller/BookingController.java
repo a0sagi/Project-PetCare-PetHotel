@@ -10,6 +10,7 @@ import service.BookingService;
 import view.PetCareMainFrame;
 
 import javax.swing.JOptionPane;
+import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import java.awt.event.KeyAdapter;
@@ -38,7 +39,9 @@ public class BookingController {
                 updateStatus();
             }
         });
-        view.getCheckoutButton().addActionListener(event -> checkout());
+        for (JButton button : view.getCheckoutButtons()) {
+            button.addActionListener(event -> checkout());
+        }
         view.getSearchButton().addActionListener(event -> searchBookings());
         view.getSearchField().addActionListener(event -> searchBookings());
         view.getDeleteButton().addActionListener(event -> deleteBooking());
@@ -143,7 +146,7 @@ public class BookingController {
         try {
             PetBooking booking = service.checkout(selected.getIdBooking());
             refreshTable(view.getSearchField().getText());
-            String invoice = "======= RINCIAN TAGIHAN PERAWATAN & PENITIPAN =======\n"
+            String invoice = "======= TAGIHAN PERAWATAN & PENITIPAN =======\n"
                     + "ID Pemesanan : " + booking.getIdBooking() + "\n"
                     + "Pemilik    : " + booking.getNamaPemilik() + "\n"
                     + "Peliharaan : " + booking.getNamaHewan() + " ("
@@ -248,6 +251,7 @@ public class BookingController {
         view.getDurationSpinner().setValue(1);
         view.getStatusBox().setEnabled(false);
         view.setUpdateDataEnabled(false);
+        view.setCheckoutEnabled(false);
         for (JTable table : view.getTables()) {
             table.clearSelection();
         }
@@ -272,6 +276,7 @@ public class BookingController {
         if (booking == null) {
             view.getStatusBox().setEnabled(false);
             view.setUpdateDataEnabled(false);
+            view.setCheckoutEnabled(false);
             return;
         }
         setSelectedStatus(booking);
@@ -286,6 +291,7 @@ public class BookingController {
         if (booking == null) {
             view.setUpdateDataEnabled(false);
             view.getStatusBox().setEnabled(false);
+            view.setCheckoutEnabled(false);
             return;
         }
         view.getIdBookingField().setText(Integer.toString(booking.getIdBooking()));
@@ -310,12 +316,16 @@ public class BookingController {
         }
         view.getStatusBox().setEnabled(view.isStatusManagementPage()
                 && booking.getStatus() != StatusPenitipan.CHECK_OUT);
+        view.setCheckoutEnabled(view.isCheckoutActionPage()
+                && booking.getStatus() == StatusPenitipan.SIAP_CHECKOUT);
     }
 
     private StatusPenitipan statusFromLabel(String label) {
         return switch (label) {
-            case "Masuk" -> StatusPenitipan.CHECK_IN;
+            case "Check-In" -> StatusPenitipan.CHECK_IN;
             case "Sedang Dirawat" -> StatusPenitipan.PERAWATAN;
+            case "Siap Check-Out" -> StatusPenitipan.SIAP_CHECKOUT;
+            case "Dibatalkan" -> StatusPenitipan.DIBATALKAN;
             default -> throw new IllegalArgumentException("Status tidak dikenal: " + label);
         };
     }
@@ -331,7 +341,7 @@ public class BookingController {
 
     private String displayStatusLabel(String label) {
         return switch (label) {
-            case "Check-In" -> "Masuk";
+            case "Check-In" -> "Check-In";
             case "Sedang Perawatan" -> "Sedang Dirawat";
             case "Check-Out" -> "Selesai";
             case "Dibatalkan" -> "Dibatalkan";
