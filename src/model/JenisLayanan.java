@@ -2,7 +2,7 @@ package model;
 
 import java.math.BigDecimal;
 
-public enum ServiceType {
+public enum JenisLayanan {
     GROOMING("Grooming", new BigDecimal("75000"), false),
     BOARDING("Boarding", BigDecimal.ZERO, true),
     FULL_SERVICE("Full Service", new BigDecimal("75000"), true);
@@ -11,7 +11,7 @@ public enum ServiceType {
     private final BigDecimal groomingFee;
     private final boolean includesBoarding;
 
-    ServiceType(String label, BigDecimal groomingFee, boolean includesBoarding) {
+    JenisLayanan(String label, BigDecimal groomingFee, boolean includesBoarding) {
         this.label = label;
         this.groomingFee = groomingFee;
         this.includesBoarding = includesBoarding;
@@ -28,11 +28,11 @@ public enum ServiceType {
         return groomingFee.add(boardingFee);
     }
 
-    public static ServiceType fromLabel(String label) {
-        for (ServiceType serviceType : values()) {
-            if (serviceType.label.equalsIgnoreCase(label)
-                    || serviceType.name().equalsIgnoreCase(label)) {
-                return serviceType;
+    public static JenisLayanan fromLabel(String label) {
+        for (JenisLayanan JenisLayanan : values()) {
+            if (JenisLayanan.label.equalsIgnoreCase(label)
+                    || JenisLayanan.name().equalsIgnoreCase(label)) {
+                return JenisLayanan;
             }
         }
         throw new IllegalArgumentException("Layanan tidak dikenal: " + label);

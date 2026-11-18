@@ -1,33 +1,13 @@
 package view;
 
-import model.BookingStatus;
+import model.JenisLayanan;
 import model.PetBooking;
-import model.ServiceType;
+import model.StatusPenitipan;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.RowFilter;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.JTextArea;
-import javax.swing.WindowConstants;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -36,30 +16,31 @@ import java.util.Locale;
 
 public class PetCareMainFrame extends JFrame {
     private static final String[] TAB_NAMES = {
-            "Dashboard", "Data Pemilik", "Data Hewan", "Pet Care",
-            "Pet Hotel", "Checkout"
+            "Ringkasan", "Data Pemilik", "Data Hewan", "Perawatan Hewan",
+            "Penitipan Hewan", "Pelunasan"
     };
 
-    private final JTextField bookingIdField = new JTextField(16);
-    private final JTextField ownerNameField = new JTextField(16);
-    private final JTextField ownerPhoneField = new JTextField(16);
-    private final JTextField petNameField = new JTextField(16);
+    private final JTextField idBookingField = new JTextField(16);
+    private final JTextField namaPemilikField = new JTextField(16);
+    private final JTextField nomorTelponField = new JTextField(16);
+    private final JTextField namaHewanField = new JTextField(16);
+    private final JTextField catatanKhususField = new JTextField(16);
     private final JTextField searchField = new JTextField(20);
-    private final JComboBox<String> petTypeBox =
+    private final JComboBox<String> jenisHewanBox =
             new JComboBox<>(new String[]{"Kucing", "Anjing", "Kelinci"});
     private final JComboBox<String> serviceBox =
-            new JComboBox<>(new String[]{"Grooming", "Boarding", "Full Service"});
+            new JComboBox<>(new String[]{"Perawatan", "Penitipan", "Layanan Lengkap"});
     private final JComboBox<String> statusBox =
-            new JComboBox<>(new String[]{"Check-In", "Sedang Perawatan", "Siap Check-Out"});
+            new JComboBox<>(new String[]{"Masuk", "Sedang Dirawat"});
     private final JSpinner durationSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 365, 1));
     private final JLabel durationLabel = new JLabel("Durasi (hari)");
     private final JLabel statusLabel = new JLabel("Status");
-    private final JButton addBookingButton = new JButton("Tambah Booking");
-    private final JButton updateDataButton = new JButton("Update Data");
-    private final JButton checkoutButton = new JButton("Checkout & Invoice");
+    private final JButton addBookingButton = new JButton("Tambah Pemesanan");
+    private final JButton updateDataButton = new JButton("Perbarui Data");
+    private final JButton checkoutButton = new JButton("Proses Pelunasan");
     private final JButton searchButton = new JButton("Cari");
     private final JButton deleteButton = new JButton("Hapus");
-    private final JButton resetButton = new JButton("Reset");
+    private final JButton resetButton = new JButton("Atur Ulang");
     private final BookingTableModel tableModel = new BookingTableModel();
     private final JTabbedPane pages = new JTabbedPane();
     private final List<JTable> tables = new ArrayList<>();
@@ -69,10 +50,10 @@ public class PetCareMainFrame extends JFrame {
     private final JLabel hotelCount = new JLabel("0");
     private final JLabel checkoutCount = new JLabel("0");
     private final JTextArea checkoutInvoice = new JTextArea(
-            "Pilih booking berstatus Siap Check-Out, lalu tekan Checkout untuk melihat invoice.");
+            "Pilih pemesanan berstatus Sedang Dirawat, lalu tekan Proses Pelunasan untuk melihat rincian tagihan.");
 
     public PetCareMainFrame() {
-        super("Pet Care & Pet Hotel");
+        super("Pet Care & Hotel Management");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(12, 12));
         getRootPane().setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
@@ -86,7 +67,7 @@ public class PetCareMainFrame extends JFrame {
 
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout());
-        JLabel title = new JLabel("Pet Care & Pet Hotel");
+        JLabel title = new JLabel("Pet Care & Hotel Management");
         title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
         JLabel date = new JLabel(LocalDate.now()
                 .format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", new Locale("id", "ID"))));
@@ -111,7 +92,7 @@ public class PetCareMainFrame extends JFrame {
 
     private JPanel createToolbar() {
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
-        toolbar.add(new JLabel("Cari pemilik / hewan / ID"));
+        toolbar.add(new JLabel("Cari pemilik / hewan / ID pemesanan"));
         toolbar.add(searchField);
         toolbar.add(searchButton);
         toolbar.add(deleteButton);
@@ -127,10 +108,10 @@ public class PetCareMainFrame extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("Pendaftaran Layanan"));
 
         JPanel form = new JPanel(new GridBagLayout());
-        String[] labels = {"ID Booking", "Nama Pemilik", "No. HP", "Nama Hewan",
-                "Jenis Hewan", "Layanan", "Durasi (hari)"};
-        java.awt.Component[] fields = {bookingIdField, ownerNameField, ownerPhoneField,
-                petNameField, petTypeBox, serviceBox, durationSpinner};
+        String[] labels = {"ID Pemesanan", "Nama Pemilik", "No. HP", "Nama Hewan",
+                "Catatan Khusus", "Jenis Hewan", "Layanan", "Durasi (hari)"};
+        java.awt.Component[] fields = {idBookingField, namaPemilikField, nomorTelponField,
+                namaHewanField, catatanKhususField, jenisHewanBox, serviceBox, durationSpinner};
         for (int row = 0; row < labels.length; row++) {
             GridBagConstraints constraints = new GridBagConstraints();
             constraints.insets = new Insets(6, 5, 6, 5);
@@ -143,8 +124,8 @@ public class PetCareMainFrame extends JFrame {
             constraints.weightx = 1;
             form.add(fields[row], constraints);
         }
-        JLabel hint = new JLabel("<html>Isi data booking, lalu tekan Tambah Booking.<br>"
-                + "Pilih baris tabel untuk update status,<br>tagihan, atau checkout.</html>");
+        JLabel hint = new JLabel("<html>Isi data pemesanan, lalu tekan Tambah Pemesanan.<br>"
+                + "Pilih baris tabel untuk memperbarui status,<br>tagihan, atau proses pelunasan.</html>");
         hint.setForeground(new Color(95, 107, 120));
         hint.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5));
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
@@ -175,7 +156,7 @@ public class PetCareMainFrame extends JFrame {
     }
 
     private void updateDurationVisibility() {
-        boolean durationRequired = !"Grooming".equals(serviceBox.getSelectedItem());
+        boolean durationRequired = serviceBox.getSelectedIndex() != 0;
         durationLabel.setVisible(durationRequired);
         durationSpinner.setVisible(durationRequired);
         revalidate();
@@ -221,7 +202,7 @@ public class PetCareMainFrame extends JFrame {
             checkoutInvoice.setWrapStyleWord(true);
             checkoutInvoice.setRows(5);
             checkoutInvoice.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-            checkoutInvoice.setBorder(BorderFactory.createTitledBorder("Invoice Checkout Terakhir"));
+            checkoutInvoice.setBorder(BorderFactory.createTitledBorder("Rincian Tagihan Terakhir"));
             page.add(new JScrollPane(checkoutInvoice), BorderLayout.SOUTH);
         }
         return page;
@@ -229,10 +210,10 @@ public class PetCareMainFrame extends JFrame {
 
     private JPanel createDashboardSummary() {
         JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
-        summary.add(statCard("Semua Booking", totalCount));
-        summary.add(statCard("Pet Care", careCount));
-        summary.add(statCard("Pet Hotel", hotelCount));
-        summary.add(statCard("Selesai Checkout", checkoutCount));
+        summary.add(statCard("Semua Pemesanan", totalCount));
+        summary.add(statCard("Perawatan Hewan", careCount));
+        summary.add(statCard("Penitipan Hewan", hotelCount));
+        summary.add(statCard("Pelunasan Selesai", checkoutCount));
         return summary;
     }
 
@@ -249,11 +230,11 @@ public class PetCareMainFrame extends JFrame {
 
     private String pageDescription(int index) {
         return switch (index) {
-            case 1 -> "Daftar pemilik beserta nomor kontak dan booking terkait.";
-            case 2 -> "Daftar hewan dan pemilik yang terdaftar pada booking.";
-            case 3 -> "Layanan grooming dan perawatan hewan.";
-            case 4 -> "Layanan penitipan dan hotel hewan.";
-            case 5 -> "Booking siap checkout dan yang sudah selesai.";
+            case 1 -> "Daftar pemilik beserta nomor kontak dan pemesanan terkait.";
+            case 2 -> "Daftar hewan dan pemilik yang terdaftar pada pemesanan.";
+            case 3 -> "Layanan perawatan dan kebersihan hewan.";
+            case 4 -> "Layanan penitipan dan penginapan hewan.";
+            case 5 -> "Pemesanan yang siap dilunasi dan yang sudah selesai.";
             default -> "";
         };
     }
@@ -261,9 +242,9 @@ public class PetCareMainFrame extends JFrame {
     private void configureColumns(JTable table, int pageIndex) {
         int[] visibleColumns = switch (pageIndex) {
             case 1 -> new int[]{0, 1, 2};
-            case 2 -> new int[]{0, 1, 2, 3, 4};
-            case 5 -> new int[]{0, 1, 3, 5, 7, 8};
-            default -> new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8};
+            case 2 -> new int[]{0, 1, 2, 3, 4, 5};
+            case 5 -> new int[]{0, 1, 3, 6, 8, 9};
+            default -> new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         };
         for (int column = table.getColumnModel().getColumnCount() - 1; column >= 0; column--) {
             TableColumn tableColumn = table.getColumnModel().getColumn(column);
@@ -286,11 +267,11 @@ public class PetCareMainFrame extends JFrame {
         tableModel.setBookings(bookings);
         totalCount.setText(Integer.toString(bookings.size()));
         careCount.setText(Long.toString(bookings.stream()
-                .filter(booking -> booking.getServiceType() != ServiceType.BOARDING).count()));
+                .filter(booking -> booking.getJenisLayanan() != JenisLayanan.BOARDING).count()));
         hotelCount.setText(Long.toString(bookings.stream()
-                .filter(booking -> booking.getServiceType() != ServiceType.GROOMING).count()));
+                .filter(booking -> booking.getJenisLayanan() != JenisLayanan.GROOMING).count()));
         checkoutCount.setText(Long.toString(bookings.stream()
-                .filter(booking -> booking.getStatus() == BookingStatus.CHECKED_OUT).count()));
+                .filter(booking -> booking.getStatus() == StatusPenitipan.CHECK_OUT).count()));
     }
 
     public void filterPages(String query) {
@@ -301,15 +282,15 @@ public class PetCareMainFrame extends JFrame {
             sorters.get(pageIndex).setRowFilter(new RowFilter<BookingTableModel, Integer>() {
                 @Override
                 public boolean include(Entry<? extends BookingTableModel, ? extends Integer> entry) {
-                    if (selectedPage == 3 && "Boarding".equals(entry.getStringValue(5))) {
+                    if (selectedPage == 3 && "Penitipan".equals(entry.getStringValue(6))) {
                         return false;
                     }
-                    if (selectedPage == 4 && "Grooming".equals(entry.getStringValue(5))) {
+                    if (selectedPage == 4 && "Perawatan".equals(entry.getStringValue(6))) {
                         return false;
                     }
                     if (selectedPage == 5
-                            && !"Selesai".equals(entry.getStringValue(7))
-                            && !"Siap Check-Out".equals(entry.getStringValue(7))) {
+                            && !"Selesai".equals(entry.getStringValue(8))
+                            && !"Sedang Dirawat".equals(entry.getStringValue(8))) {
                         return false;
                     }
                     if (searchTerm.isEmpty()) {
@@ -327,17 +308,18 @@ public class PetCareMainFrame extends JFrame {
         }
     }
 
-    public JTextField getBookingIdField() { return bookingIdField; }
-    public JTextField getOwnerNameField() { return ownerNameField; }
-    public JTextField getOwnerPhoneField() { return ownerPhoneField; }
-    public JTextField getPetNameField() { return petNameField; }
-    public JComboBox<String> getPetTypeBox() { return petTypeBox; }
-    public JComboBox<String> getServiceBox() { return serviceBox; }
-    public JSpinner getDurationSpinner() { return durationSpinner; }
-    public JTextField getSearchField() { return searchField; }
-    public JButton getAddBookingButton() { return addBookingButton; }
-    public JButton getUpdateDataButton() { return updateDataButton; }
-    public JComboBox<String> getStatusBox() { return statusBox; }
+    public JTextField getIdBookingField()           { return idBookingField; }
+    public JTextField getNamaPemilikField()          { return namaPemilikField; }
+    public JTextField getNomorTelponField()          { return nomorTelponField; }
+    public JTextField getNamaHewanField()            { return namaHewanField; }
+    public JTextField getCatatanKhususField()        { return catatanKhususField; }
+    public JComboBox<String> getJenisHewanBox()      { return jenisHewanBox; }
+    public JComboBox<String> getServiceBox()         { return serviceBox; }
+    public JSpinner getDurationSpinner()             { return durationSpinner; }
+    public JTextField getSearchField()               { return searchField; }
+    public JButton getAddBookingButton()             { return addBookingButton; }
+    public JButton getUpdateDataButton()             { return updateDataButton; }
+    public JComboBox<String> getStatusBox()          { return statusBox; }
     public boolean isStatusManagementPage() {
         return pages.getSelectedIndex() == 3 || pages.getSelectedIndex() == 4;
     }
@@ -346,13 +328,13 @@ public class PetCareMainFrame extends JFrame {
         return selectedPage == 0 || selectedPage == 3 || selectedPage == 4;
     }
     public void setUpdateDataEnabled(boolean enabled) { updateDataButton.setEnabled(enabled); }
-    public JButton getCheckoutButton() { return checkoutButton; }
-    public JButton getSearchButton() { return searchButton; }
-    public JButton getDeleteButton() { return deleteButton; }
-    public JButton getResetButton() { return resetButton; }
-    public JTable getSelectedBookingsTable() { return tables.get(pages.getSelectedIndex()); }
-    public List<JTable> getTables() { return new ArrayList<>(tables); }
-    public JTabbedPane getPages() { return pages; }
-    public BookingTableModel getTableModel() { return tableModel; }
-    public void showCheckoutInvoice(String invoice) { checkoutInvoice.setText(invoice); }
+    public JButton getCheckoutButton()               { return checkoutButton; }
+    public JButton getSearchButton()                 { return searchButton; }
+    public JButton getDeleteButton()                 { return deleteButton; }
+    public JButton getResetButton()                  { return resetButton; }
+    public JTable getSelectedBookingsTable()         { return tables.get(pages.getSelectedIndex()); }
+    public List<JTable> getTables()                  { return new ArrayList<>(tables); }
+    public JTabbedPane getPages()                    { return pages; }
+    public BookingTableModel getTableModel()         { return tableModel; }
+    public void showCheckoutInvoice(String invoice)  { checkoutInvoice.setText(invoice); }
 }

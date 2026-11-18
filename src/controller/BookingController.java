@@ -1,11 +1,11 @@
 package controller;
 
-import model.AnimalFactory;
-import model.BookingStatus;
-import model.Pet;
+import model.HewanFactory;
+import model.JenisHewan;
+import model.JenisLayanan;
+import model.Hewan;
 import model.PetBooking;
-import model.PetType;
-import model.ServiceType;
+import model.StatusPenitipan;
 import service.BookingService;
 import view.PetCareMainFrame;
 
@@ -47,7 +47,7 @@ public class BookingController {
         for (JTable table : view.getTables()) {
             table.getSelectionModel().addListSelectionListener(this::selectBooking);
         }
-        view.getOwnerPhoneField().addKeyListener(new KeyAdapter() {
+        view.getNomorTelponField().addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent event) {
                 if (!Character.isDigit(event.getKeyChar())
@@ -60,19 +60,22 @@ public class BookingController {
 
     private void registerBooking() {
         try {
-            int bookingId = Integer.parseInt(view.getBookingIdField().getText().trim());
-            PetType petType = PetType.fromLabel((String) view.getPetTypeBox().getSelectedItem());
-            Pet pet = AnimalFactory.create(petType, view.getPetNameField().getText().trim());
+            int bookingId = Integer.parseInt(view.getIdBookingField().getText().trim());
+            JenisHewan jenisHewan = JenisHewan.fromLabel(
+                    (String) view.getJenisHewanBox().getSelectedItem());
+            String catatanKhusus = view.getCatatanKhususField().getText().trim();
+            Hewan hewan = HewanFactory.create(
+                    jenisHewan, view.getNamaHewanField().getText().trim(), catatanKhusus);
             service.register(
                     bookingId,
-                    view.getOwnerNameField().getText().trim(),
-                    Integer.parseInt(view.getOwnerPhoneField().getText().trim()),
-                    pet,
-                    ServiceType.fromLabel((String) view.getServiceBox().getSelectedItem()),
-                    selectedDurationDays());
+                    view.getNamaPemilikField().getText().trim(),
+                    view.getNomorTelponField().getText().trim(),
+                    hewan,
+                    selectedJenisLayanan(),
+                    selectedDurasiHari());
             refreshTable(view.getSearchField().getText());
             clearForm();
-            JOptionPane.showMessageDialog(view, "Booking berhasil disimpan.",
+            JOptionPane.showMessageDialog(view, "Pemesanan berhasil disimpan.",
                     "Berhasil", JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException | SQLException exception) {
             showError(exception);
@@ -90,12 +93,13 @@ public class BookingController {
             return;
         }
         try {
-            BookingStatus selectedStatus = statusFromLabel(
+            StatusPenitipan selectedStatus = statusFromLabel(
                     (String) view.getStatusBox().getSelectedItem());
-            String nextStatus = service.updateStatus(booking.getBookingId(), selectedStatus).getLabel();
+            String nextStatus = displayStatusLabel(
+                    service.updateStatus(booking.getIdBooking(), selectedStatus).getLabel());
             refreshTable(view.getSearchField().getText());
             JOptionPane.showMessageDialog(view, "Status diperbarui menjadi " + nextStatus + ".",
-                    "Update Status", JOptionPane.INFORMATION_MESSAGE);
+                    "Perbarui Status", JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException | IllegalStateException | SQLException exception) {
             showError(exception);
         }
@@ -107,18 +111,21 @@ public class BookingController {
             return;
         }
         try {
-            PetType petType = PetType.fromLabel((String) view.getPetTypeBox().getSelectedItem());
-            Pet pet = AnimalFactory.create(petType, view.getPetNameField().getText().trim());
+            JenisHewan jenisHewan = JenisHewan.fromLabel(
+                    (String) view.getJenisHewanBox().getSelectedItem());
+            String catatanKhusus = view.getCatatanKhususField().getText().trim();
+            Hewan hewan = HewanFactory.create(
+                    jenisHewan, view.getNamaHewanField().getText().trim(), catatanKhusus);
             service.updateBooking(
-                    selected.getBookingId(),
-                    view.getOwnerNameField().getText().trim(),
-                    Integer.parseInt(view.getOwnerPhoneField().getText().trim()),
-                    pet,
-                    ServiceType.fromLabel((String) view.getServiceBox().getSelectedItem()),
-                    selectedDurationDays());
+                    selected.getIdBooking(),
+                    view.getNamaPemilikField().getText().trim(),
+                    view.getNomorTelponField().getText().trim(),
+                    hewan,
+                    selectedJenisLayanan(),
+                    selectedDurasiHari());
             refreshTable(view.getSearchField().getText());
             clearForm();
-            JOptionPane.showMessageDialog(view, "Data booking berhasil diperbarui.",
+            JOptionPane.showMessageDialog(view, "Data pemesanan berhasil diperbarui.",
                     "Berhasil", JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException | IllegalStateException | SQLException exception) {
             showError(exception);
@@ -134,24 +141,24 @@ public class BookingController {
             return;
         }
         try {
-            PetBooking booking = service.checkout(selected.getBookingId());
+            PetBooking booking = service.checkout(selected.getIdBooking());
             refreshTable(view.getSearchField().getText());
-            String invoice = "======= INVOICE PET CARE & HOTEL =======\n"
-                    + "ID Booking : " + booking.getBookingId() + "\n"
-                    + "Pemilik    : " + booking.getOwnerName() + "\n"
-                    + "Peliharaan : " + booking.getPetName() + " ("
-                    + booking.getPetType().getLabel() + ")\n"
-                    + "Layanan    : " + booking.getServiceType().getLabel() + "\n"
-                    + (booking.getServiceType() == ServiceType.GROOMING
+            String invoice = "======= RINCIAN TAGIHAN PERAWATAN & PENITIPAN =======\n"
+                    + "ID Pemesanan : " + booking.getIdBooking() + "\n"
+                    + "Pemilik    : " + booking.getNamaPemilik() + "\n"
+                    + "Peliharaan : " + booking.getNamaHewan() + " ("
+                    + booking.getJenisHewan().getLabel() + ")\n"
+                    + "Layanan    : " + displayServiceLabel(booking.getJenisLayanan().getLabel()) + "\n"
+                    + (booking.getJenisLayanan() == JenisLayanan.GROOMING
                     ? "TOTAL LAYANAN: " + formatCurrency(booking.getTotalBill()) + "\n"
-                    : "Durasi     : " + booking.getDurationDays() + " hari\n"
-                    + "Tarif/hari : " + formatCurrency(booking.getDailyRate()) + "\n"
+                    : "Durasi     : " + booking.getDurasiHari() + " hari\n"
+                    + "Tarif/hari : " + formatCurrency(booking.getTarifHarian()) + "\n"
                     + "Biaya jasa : " + formatCurrency(booking.getServiceFee()) + "\n"
                     + "TOTAL      : " + formatCurrency(booking.getTotalBill()) + "\n")
                     + "========================================";
             view.showCheckoutInvoice(invoice);
             view.getPages().setSelectedIndex(5);
-            JOptionPane.showMessageDialog(view, invoice, "Invoice Tagihan",
+            JOptionPane.showMessageDialog(view, invoice, "Rincian Tagihan",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException | IllegalStateException | SQLException exception) {
             showError(exception);
@@ -164,16 +171,16 @@ public class BookingController {
             return;
         }
         int answer = JOptionPane.showConfirmDialog(view,
-                "Hapus booking ID " + booking.getBookingId() + "?",
+                "Hapus pemesanan dengan ID " + booking.getIdBooking() + "?",
                 "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION) {
             return;
         }
         try {
-            service.deleteBooking(booking.getBookingId());
+            service.deleteBooking(booking.getIdBooking());
             refreshTable(view.getSearchField().getText());
             clearForm();
-            JOptionPane.showMessageDialog(view, "Booking berhasil dihapus.",
+            JOptionPane.showMessageDialog(view, "Pemesanan berhasil dihapus.",
                     "Berhasil", JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException | SQLException exception) {
             showError(exception);
@@ -188,7 +195,7 @@ public class BookingController {
         JTable table = view.getSelectedBookingsTable();
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(view, "Pilih booking pada tabel terlebih dahulu.",
+            JOptionPane.showMessageDialog(view, "Pilih pemesanan pada tabel terlebih dahulu.",
                     "Peringatan", JOptionPane.WARNING_MESSAGE);
             return null;
         }
@@ -196,32 +203,10 @@ public class BookingController {
         int bookingId = (int) view.getTableModel().getValueAt(modelRow, 0);
         PetBooking booking = service.findById(bookingId);
         if (booking == null) {
-            JOptionPane.showMessageDialog(view, "Booking tidak ditemukan.",
+            JOptionPane.showMessageDialog(view, "Pemesanan tidak ditemukan.",
                     "Peringatan", JOptionPane.WARNING_MESSAGE);
         }
         return booking;
-    }
-
-    private void selectBooking(ListSelectionEvent event) {
-        if (event.getValueIsAdjusting()) {
-            return;
-        }
-        PetBooking booking = selectedBookingWithoutWarning();
-        if (booking == null) {
-            view.setUpdateDataEnabled(false);
-            view.getStatusBox().setEnabled(false);
-            return;
-        }
-        view.getBookingIdField().setText(Integer.toString(booking.getBookingId()));
-        view.getBookingIdField().setEditable(false);
-        view.getOwnerNameField().setText(booking.getOwnerName());
-        view.getOwnerPhoneField().setText(Integer.toString(booking.getOwnerPhone()));
-        view.getPetNameField().setText(booking.getPetName());
-        view.getPetTypeBox().setSelectedItem(booking.getPetType().getLabel());
-        view.getServiceBox().setSelectedItem(booking.getServiceType().getLabel());
-        view.getDurationSpinner().setValue(booking.getDurationDays());
-        setSelectedStatus(booking);
-        view.setUpdateDataEnabled(booking.getStatus() != BookingStatus.CHECKED_OUT);
     }
 
     private PetBooking selectedBookingWithoutWarning() {
@@ -252,12 +237,13 @@ public class BookingController {
     }
 
     private void clearForm() {
-        view.getBookingIdField().setText("");
-        view.getBookingIdField().setEditable(true);
-        view.getOwnerNameField().setText("");
-        view.getOwnerPhoneField().setText("");
-        view.getPetNameField().setText("");
-        view.getPetTypeBox().setSelectedIndex(0);
+        view.getIdBookingField().setText("");
+        view.getIdBookingField().setEditable(true);
+        view.getNamaPemilikField().setText("");
+        view.getNomorTelponField().setText("");
+        view.getNamaHewanField().setText("");
+        view.getCatatanKhususField().setText("");
+        view.getJenisHewanBox().setSelectedIndex(0);
         view.getServiceBox().setSelectedIndex(0);
         view.getDurationSpinner().setValue(1);
         view.getStatusBox().setEnabled(false);
@@ -267,9 +253,18 @@ public class BookingController {
         }
     }
 
-    private int selectedDurationDays() {
-        return view.getServiceBox().getSelectedItem().equals("Grooming")
+    private int selectedDurasiHari() {
+        return view.getServiceBox().getSelectedIndex() == 0
                 ? 1 : (Integer) view.getDurationSpinner().getValue();
+    }
+
+    private JenisLayanan selectedJenisLayanan() {
+        return switch ((String) view.getServiceBox().getSelectedItem()) {
+            case "Perawatan" -> JenisLayanan.GROOMING;
+            case "Penitipan" -> JenisLayanan.BOARDING;
+            case "Layanan Lengkap" -> JenisLayanan.FULL_SERVICE;
+            default -> throw new IllegalArgumentException("Jenis layanan tidak dikenal.");
+        };
     }
 
     private void syncSelectedControls() {
@@ -280,27 +275,68 @@ public class BookingController {
             return;
         }
         setSelectedStatus(booking);
-        view.setUpdateDataEnabled(booking.getStatus() != BookingStatus.CHECKED_OUT);
+        view.setUpdateDataEnabled(booking.getStatus() != StatusPenitipan.CHECK_OUT);
+    }
+
+    private void selectBooking(ListSelectionEvent event) {
+        if (event.getValueIsAdjusting()) {
+            return;
+        }
+        PetBooking booking = selectedBookingWithoutWarning();
+        if (booking == null) {
+            view.setUpdateDataEnabled(false);
+            view.getStatusBox().setEnabled(false);
+            return;
+        }
+        view.getIdBookingField().setText(Integer.toString(booking.getIdBooking()));
+        view.getIdBookingField().setEditable(false);
+        view.getNamaPemilikField().setText(booking.getNamaPemilik());
+        view.getNomorTelponField().setText(booking.getNomorTelpon());
+        view.getNamaHewanField().setText(booking.getNamaHewan());
+        view.getCatatanKhususField().setText(booking.getCatatanKhusus());
+        view.getJenisHewanBox().setSelectedItem(booking.getJenisHewan().getLabel());
+        view.getServiceBox().setSelectedItem(displayServiceLabel(booking.getJenisLayanan().getLabel()));
+        view.getDurationSpinner().setValue(booking.getDurasiHari());
+        setSelectedStatus(booking);
+        view.setUpdateDataEnabled(booking.getStatus() != StatusPenitipan.CHECK_OUT);
     }
 
     private void setSelectedStatus(PetBooking booking) {
         loadingSelectedStatus = true;
         try {
-            view.getStatusBox().setSelectedItem(booking.getStatus().getLabel());
+            view.getStatusBox().setSelectedItem(displayStatusLabel(booking.getStatus().getLabel()));
         } finally {
             loadingSelectedStatus = false;
         }
         view.getStatusBox().setEnabled(view.isStatusManagementPage()
-                && booking.getStatus() != BookingStatus.CHECKED_OUT);
+                && booking.getStatus() != StatusPenitipan.CHECK_OUT);
     }
 
-    private BookingStatus statusFromLabel(String label) {
-        for (BookingStatus status : BookingStatus.values()) {
-            if (status.getLabel().equals(label)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Status booking tidak dikenal: " + label);
+    private StatusPenitipan statusFromLabel(String label) {
+        return switch (label) {
+            case "Masuk" -> StatusPenitipan.CHECK_IN;
+            case "Sedang Dirawat" -> StatusPenitipan.PERAWATAN;
+            default -> throw new IllegalArgumentException("Status tidak dikenal: " + label);
+        };
+    }
+
+    private String displayServiceLabel(String label) {
+        return switch (label) {
+            case "Grooming" -> "Perawatan";
+            case "Boarding" -> "Penitipan";
+            case "Full Service" -> "Layanan Lengkap";
+            default -> label;
+        };
+    }
+
+    private String displayStatusLabel(String label) {
+        return switch (label) {
+            case "Check-In" -> "Masuk";
+            case "Sedang Perawatan" -> "Sedang Dirawat";
+            case "Check-Out" -> "Selesai";
+            case "Dibatalkan" -> "Dibatalkan";
+            default -> label;
+        };
     }
 
     private String formatCurrency(java.math.BigDecimal amount) {

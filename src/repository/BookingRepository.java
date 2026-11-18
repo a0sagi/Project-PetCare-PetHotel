@@ -1,6 +1,6 @@
 package repository;
 
-import model.BookingStatus;
+import model.StatusPenitipan;
 import model.PetBooking;
 
 import java.util.ArrayList;
@@ -13,23 +13,23 @@ public class BookingRepository {
     private final Map<Integer, PetBooking> bookingMap = new HashMap<>();
 
     public void addBooking(PetBooking booking) {
-        if (bookingMap.containsKey(booking.getBookingId())) {
+        if (bookingMap.containsKey(booking.getIdBooking())) {
             throw new IllegalArgumentException("ID booking sudah terdaftar.");
         }
         bookingList.add(booking);
-        bookingMap.put(booking.getBookingId(), booking);
+        bookingMap.put(booking.getIdBooking(), booking);
     }
 
-    public PetBooking findById(int bookingId) {
-        return bookingMap.get(bookingId);
+    public PetBooking findById(int idBooking) {
+        return bookingMap.get(idBooking);
     }
 
     public List<PetBooking> getAllBookings() {
         return new ArrayList<>(bookingList);
     }
 
-    public void updateStatus(int bookingId, BookingStatus newStatus) {
-        PetBooking booking = bookingMap.get(bookingId);
+    public void updateStatus(int idBooking, StatusPenitipan newStatus) {
+        PetBooking booking = bookingMap.get(idBooking);
         if (booking == null) {
             throw new IllegalArgumentException("Booking tidak ditemukan.");
         }
@@ -37,17 +37,17 @@ public class BookingRepository {
     }
 
     public void updateBooking(PetBooking booking) {
-        PetBooking current = bookingMap.get(booking.getBookingId());
+        PetBooking current = bookingMap.get(booking.getIdBooking());
         if (current == null) {
             throw new IllegalArgumentException("Booking tidak ditemukan.");
         }
         int index = bookingList.indexOf(current);
         bookingList.set(index, booking);
-        bookingMap.put(booking.getBookingId(), booking);
+        bookingMap.put(booking.getIdBooking(), booking);
     }
 
-    public void deleteBooking(int bookingId) {
-        PetBooking booking = bookingMap.remove(bookingId);
+    public void deleteBooking(int idBooking) {
+        PetBooking booking = bookingMap.remove(idBooking);
         if (booking == null) {
             throw new IllegalArgumentException("Booking tidak ditemukan.");
         }

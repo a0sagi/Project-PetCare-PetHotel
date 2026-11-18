@@ -1,15 +1,15 @@
 package service;
 
 import database.BookingDAO;
-import model.Pet;
-import model.BookingStatus;
+import model.Hewan;
+import model.StatusPenitipan;
 import model.PetBooking;
-import model.ServiceType;
+import model.JenisLayanan;
 import repository.BookingRepository;
 
 import java.sql.SQLException;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -27,14 +27,14 @@ public class BookingService {
         }
     }
 
-    public PetBooking register(int bookingId, String ownerName, int ownerPhone,
-                                   Pet animal, ServiceType serviceType, int durationDays)
+    public PetBooking register(int idBooking, String namaPemilik, String nomorTelpon,
+                               Hewan hewan, JenisLayanan jenisLayanan, int durationDays)
             throws SQLException {
-        if (repository.findById(bookingId) != null) {
+        if (repository.findById(idBooking) != null) {
             throw new IllegalArgumentException("ID booking sudah terdaftar.");
         }
-        PetBooking booking = new PetBooking(bookingId, ownerName, ownerPhone,
-                animal, serviceType, durationDays);
+        PetBooking booking = new PetBooking(idBooking, namaPemilik, nomorTelpon,
+                hewan, jenisLayanan, durationDays);
         if (dao != null) {
             dao.insert(booking);
         }
@@ -42,38 +42,38 @@ public class BookingService {
         return booking;
     }
 
-    public BookingStatus advanceStatus(int bookingId) throws SQLException {
-        PetBooking booking = requireBooking(bookingId);
-        BookingStatus nextStatus = booking.getStatus().next();
+    public StatusPenitipan advanceStatus(int idBooking) throws SQLException {
+        PetBooking booking = requireBooking(idBooking);
+        StatusPenitipan nextStatus = booking.getStatus().next();
         if (dao != null) {
-            dao.updateStatus(bookingId, nextStatus);
+            dao.updateStatus(idBooking, nextStatus);
         }
-        repository.updateStatus(bookingId, nextStatus);
+        repository.updateStatus(idBooking, nextStatus);
         return nextStatus;
     }
 
-    public BookingStatus updateStatus(int bookingId, BookingStatus status) throws SQLException {
-        PetBooking booking = requireBooking(bookingId);
-        if (booking.getStatus() == BookingStatus.CHECKED_OUT) {
+    public StatusPenitipan updateStatus(int idBooking, StatusPenitipan status) throws SQLException {
+        PetBooking booking = requireBooking(idBooking);
+        if (booking.getStatus() == StatusPenitipan.CHECK_OUT) {
             throw new IllegalStateException("Status booking yang sudah checkout tidak dapat diubah.");
         }
-        if (status == null || status == BookingStatus.CHECKED_OUT) {
+        if (status == null || status == StatusPenitipan.CHECK_OUT) {
             throw new IllegalArgumentException("Gunakan proses checkout untuk menyelesaikan booking.");
         }
         if (booking.getStatus() == status) {
             return status;
         }
         if (dao != null) {
-            dao.updateStatus(bookingId, status);
+            dao.updateStatus(idBooking, status);
         }
-        repository.updateStatus(bookingId, status);
+        repository.updateStatus(idBooking, status);
         return status;
     }
 
-    public PetBooking checkout(int bookingId) throws SQLException {
-        PetBooking booking = requireBooking(bookingId);
-        if (booking.getStatus() != BookingStatus.READY_FOR_CHECKOUT) {
-            throw new IllegalStateException("Majukan status sampai Siap Check-Out terlebih dahulu.");
+    public PetBooking checkout(int idBooking) throws SQLException {
+        PetBooking booking = requireBooking(idBooking);
+        if (booking.getStatus() != StatusPenitipan.PERAWATAN) {
+            throw new IllegalStateException("Majukan status ke Sedang Perawatan terlebih dahulu.");
         }
         if (dao != null) {
             dao.checkout(booking);
@@ -82,15 +82,15 @@ public class BookingService {
         return booking;
     }
 
-    public PetBooking updateBooking(int bookingId, String ownerName, int ownerPhone,
-                                    Pet animal, ServiceType serviceType, int durationDays)
+    public PetBooking updateBooking(int idBooking, String namaPemilik, String nomorTelpon,
+                                    Hewan hewan, JenisLayanan jenisLayanan, int durationDays)
             throws SQLException {
-        PetBooking current = requireBooking(bookingId);
-        if (current.getStatus() == BookingStatus.CHECKED_OUT) {
+        PetBooking current = requireBooking(idBooking);
+        if (current.getStatus() == StatusPenitipan.CHECK_OUT) {
             throw new IllegalStateException("Data booking yang sudah checkout tidak dapat diubah.");
         }
-        PetBooking updated = new PetBooking(bookingId, ownerName, ownerPhone,
-                animal, serviceType, durationDays, current.getStatus());
+        PetBooking updated = new PetBooking(idBooking, namaPemilik, nomorTelpon,
+                hewan, jenisLayanan, durationDays, current.getStatus());
         if (dao != null) {
             dao.updateBooking(updated);
         }
@@ -98,8 +98,8 @@ public class BookingService {
         return updated;
     }
 
-    public PetBooking findById(int bookingId) {
-        return repository.findById(bookingId);
+    public PetBooking findById(int idBooking) {
+        return repository.findById(idBooking);
     }
 
     public List<PetBooking> getAllBookings() {
@@ -116,26 +116,26 @@ public class BookingService {
         }
         String searchTerm = normalized.toLowerCase(Locale.ROOT);
         return getAllBookings().stream()
-                .filter(booking -> Integer.toString(booking.getBookingId()).contains(searchTerm)
-                        || booking.getOwnerName().toLowerCase(Locale.ROOT).contains(searchTerm)
-                        || Integer.toString(booking.getOwnerPhone()).contains(searchTerm)
-                        || booking.getPetName().toLowerCase(Locale.ROOT).contains(searchTerm)
-                        || booking.getPetType().getLabel().toLowerCase(Locale.ROOT).contains(searchTerm)
-                        || booking.getServiceType().getLabel().toLowerCase(Locale.ROOT).contains(searchTerm)
+                .filter(booking -> Integer.toString(booking.getIdBooking()).contains(searchTerm)
+                        || booking.getNamaPemilik().toLowerCase(Locale.ROOT).contains(searchTerm)
+                        || booking.getNomorTelpon().contains(searchTerm)
+                        || booking.getNamaHewan().toLowerCase(Locale.ROOT).contains(searchTerm)
+                        || booking.getJenisHewan().getLabel().toLowerCase(Locale.ROOT).contains(searchTerm)
+                        || booking.getJenisLayanan().getLabel().toLowerCase(Locale.ROOT).contains(searchTerm)
                         || booking.getStatus().getLabel().toLowerCase(Locale.ROOT).contains(searchTerm))
                 .collect(Collectors.toList());
     }
 
-    public void deleteBooking(int bookingId) throws SQLException {
-        requireBooking(bookingId);
+    public void deleteBooking(int idBooking) throws SQLException {
+        requireBooking(idBooking);
         if (dao != null) {
-            dao.delete(bookingId);
+            dao.delete(idBooking);
         }
-        repository.deleteBooking(bookingId);
+        repository.deleteBooking(idBooking);
     }
 
-    private PetBooking requireBooking(int bookingId) {
-        PetBooking booking = repository.findById(bookingId);
+    private PetBooking requireBooking(int idBooking) {
+        PetBooking booking = repository.findById(idBooking);
         if (booking == null) {
             throw new IllegalArgumentException("Booking tidak ditemukan.");
         }

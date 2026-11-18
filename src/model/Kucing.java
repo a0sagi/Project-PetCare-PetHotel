@@ -2,18 +2,22 @@ package model;
 
 import java.math.BigDecimal;
 
-public final class Kucing extends Pet {
+public final class Kucing extends Hewan {
     public Kucing(String name) {
-        super(name);
+        this(name, "");
+    }
+
+    public Kucing(String name, String CatatanKhusus) {
+        super(name, CatatanKhusus);
     }
 
     @Override
-    public PetType getPetType() {
-        return PetType.KUCING;
+    public JenisHewan getJenisHewan() {
+        return JenisHewan.KUCING;
     }
 
     @Override
-    public BigDecimal getDailyRate() {
+    public BigDecimal getTarifHarian() {
         return new BigDecimal("50000");
     }
 }

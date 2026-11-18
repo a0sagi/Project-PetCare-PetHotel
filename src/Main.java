@@ -1,10 +1,10 @@
 import controller.BookingController;
 import database.BookingDAO;
-import model.Pet;
-import model.AnimalFactory;
+import model.Hewan;
+import model.HewanFactory;
+import model.JenisHewan;
+import model.JenisLayanan;
 import model.PetBooking;
-import model.PetType;
-import model.ServiceType;
 import repository.BookingRepository;
 import service.BookingService;
 import view.PetCareMainFrame;
@@ -41,26 +41,27 @@ public class Main {
     private static void runConsoleDemo() {
         BookingRepository repository = new BookingRepository();
         NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID"));
-        for (PetType petType : PetType.values()) {
-            Pet animal = AnimalFactory.create(petType, "Contoh " + petType.getLabel());
+        for (JenisHewan jenisHewan : JenisHewan.values()) {
+            Hewan hewan = HewanFactory.create(jenisHewan, "Contoh " + jenisHewan.getLabel());
             PetBooking booking = new PetBooking(
-                    petType.ordinal() + 1,
+                    jenisHewan.ordinal() + 1,
                     "Pemilik Contoh",
-                    812345678,
-                    animal,
-                    ServiceType.BOARDING,
+                    "0812345678",
+                    hewan,
+                    JenisLayanan.BOARDING,
                     2);
             repository.addBooking(booking);
             System.out.printf("%s: tarif inap %s/hari, tagihan dua hari %s%n",
-                    animal.getPetType().getLabel(), currency.format(animal.getDailyRate()),
+                    hewan.getJenisHewan().getLabel(),
+                    currency.format(hewan.getTarifHarian()),
                     currency.format(booking.getTotalBill()));
         }
         System.out.println("Pencarian booking 1: "
-                + repository.findById(1).getPetName());
+                + repository.findById(1).getNamaHewan());
         try {
             repository.addBooking(repository.findById(1));
         } catch (IllegalArgumentException exception) {
             System.out.println("Validasi ID duplikat: " + exception.getMessage());
         }
     }
-} 
+}

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     pet_name      VARCHAR(100)  NOT NULL,
     pet_type      VARCHAR(20)   NOT NULL,
     owner_name    VARCHAR(100)  NOT NULL,
-    owner_phone   INT           NOT NULL,
+    owner_phone   VARCHAR(20)   NOT NULL,
     service_type  VARCHAR(20)   NOT NULL,
     duration_days INT           NOT NULL,
     status        VARCHAR(30)   NOT NULL,

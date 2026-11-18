@@ -1,11 +1,11 @@
 package database;
 
-import model.Pet;
-import model.AnimalFactory;
-import model.BookingStatus;
+import model.Hewan;
+import model.HewanFactory;
+import model.JenisHewan;
+import model.JenisLayanan;
 import model.PetBooking;
-import model.PetType;
-import model.ServiceType;
+import model.StatusPenitipan;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,13 +26,13 @@ public class BookingDAO {
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, booking.getBookingId());
-            statement.setString(2, booking.getPetName());
-            statement.setString(3, booking.getPetType().name());
-            statement.setString(4, booking.getOwnerName());
-            statement.setInt(5, booking.getOwnerPhone());
-            statement.setString(6, booking.getServiceType().name());
-            statement.setInt(7, booking.getDurationDays());
+            statement.setInt(1, booking.getIdBooking());
+            statement.setString(2, booking.getNamaHewan());
+            statement.setString(3, booking.getJenisHewan().name());
+            statement.setString(4, booking.getNamaPemilik());
+            statement.setString(5, booking.getNomorTelpon());
+            statement.setString(6, booking.getJenisLayanan().name());
+            statement.setInt(7, booking.getDurasiHari());
             statement.setString(8, booking.getStatus().name());
             statement.setBigDecimal(9, booking.getTotalBill());
             statement.executeUpdate();
@@ -51,7 +51,7 @@ public class BookingDAO {
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
-                 bookings.add(readBooking(resultSet));
+                bookings.add(readBooking(resultSet));
             }
         }
         return bookings;
@@ -66,7 +66,7 @@ public class BookingDAO {
                     OR pet_name LIKE ?
                     OR pet_type LIKE ?
                     OR owner_name LIKE ?
-                    OR CAST(owner_phone AS CHAR) LIKE ?
+                    OR owner_phone LIKE ?
                     OR service_type LIKE ?
                     OR status LIKE ?
                  ORDER BY created_at DESC
@@ -96,7 +96,7 @@ public class BookingDAO {
         }
     }
 
-    public void updateStatus(int bookingId, BookingStatus status) throws SQLException {
+    public void updateStatus(int bookingId, StatusPenitipan status) throws SQLException {
         String sql = "UPDATE bookings SET status = ? WHERE booking_id = ?";
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -115,16 +115,16 @@ public class BookingDAO {
                 """;
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, booking.getPetName());
-            statement.setString(2, booking.getPetType().name());
-            statement.setString(3, booking.getOwnerName());
-            statement.setInt(4, booking.getOwnerPhone());
-            statement.setString(5, booking.getServiceType().name());
-            statement.setInt(6, booking.getDurationDays());
+            statement.setString(1, booking.getNamaHewan());
+            statement.setString(2, booking.getJenisHewan().name());
+            statement.setString(3, booking.getNamaPemilik());
+            statement.setString(4, booking.getNomorTelpon());
+            statement.setString(5, booking.getJenisLayanan().name());
+            statement.setInt(6, booking.getDurasiHari());
             statement.setBigDecimal(7, booking.getTotalBill());
-            statement.setInt(8, booking.getBookingId());
+            statement.setInt(8, booking.getIdBooking());
             if (statement.executeUpdate() == 0) {
-                requireBookingExists(connection, booking.getBookingId());
+                requireBookingExists(connection, booking.getIdBooking());
             }
         }
     }
@@ -134,10 +134,10 @@ public class BookingDAO {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, BookingStatus.CHECKED_OUT.name());
+                statement.setString(1, StatusPenitipan.CHECK_OUT.name());
                 statement.setBigDecimal(2, booking.calculateTotalBill());
-                statement.setInt(3, booking.getBookingId());
-                requireUpdatedRow(statement.executeUpdate(), booking.getBookingId());
+                statement.setInt(3, booking.getIdBooking());
+                requireUpdatedRow(statement.executeUpdate(), booking.getIdBooking());
                 connection.commit();
             } catch (SQLException exception) {
                 rollback(connection, exception);
@@ -174,16 +174,16 @@ public class BookingDAO {
     }
 
     private static PetBooking readBooking(ResultSet resultSet) throws SQLException {
-        PetType petType = PetType.valueOf(resultSet.getString("pet_type"));
-        Pet animal = AnimalFactory.create(petType, resultSet.getString("pet_name"));
+        JenisHewan jenisHewan = JenisHewan.valueOf(resultSet.getString("pet_type"));
+        Hewan hewan = HewanFactory.create(jenisHewan, resultSet.getString("pet_name"));
         PetBooking booking = new PetBooking(
                 resultSet.getInt("booking_id"),
                 resultSet.getString("owner_name"),
-                resultSet.getInt("owner_phone"),
-                animal,
-                ServiceType.valueOf(resultSet.getString("service_type")),
+                resultSet.getString("owner_phone"),
+                hewan,
+                JenisLayanan.valueOf(resultSet.getString("service_type")),
                 resultSet.getInt("duration_days"),
-                BookingStatus.valueOf(resultSet.getString("status")));
+                StatusPenitipan.valueOf(resultSet.getString("status")));
         booking.setTotalBill(resultSet.getBigDecimal("total_bill"));
         return booking;
     }

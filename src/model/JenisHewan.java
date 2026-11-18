@@ -1,13 +1,13 @@
 package model;
 
-public enum PetType {
+public enum JenisHewan {
     KUCING("Kucing"),
     ANJING("Anjing"),
     KELINCI("Kelinci");
 
     private final String label;
 
-    PetType(String label) {
+    JenisHewan(String label) {
         this.label = label;
     }
 
@@ -15,11 +15,11 @@ public enum PetType {
         return label;
     }
 
-    public static PetType fromLabel(String label) {
-        for (PetType petType : values()) {
-            if (petType.label.equalsIgnoreCase(label)
-                    || petType.name().equalsIgnoreCase(label)) {
-                return petType;
+    public static JenisHewan fromLabel(String label) {
+        for (JenisHewan jenis : values()) {
+            if (jenis.label.equalsIgnoreCase(label)
+                    || jenis.name().equalsIgnoreCase(label)) {
+                return jenis;
             }
         }
         throw new IllegalArgumentException("Jenis hewan tidak dikenal: " + label);

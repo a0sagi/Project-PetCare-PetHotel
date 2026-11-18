@@ -2,18 +2,22 @@ package model;
 
 import java.math.BigDecimal;
 
-public final class Anjing extends Pet {
+public final class Anjing extends Hewan {
     public Anjing(String name) {
-        super(name);
+        this(name, "");
+    }
+
+    public Anjing(String name, String CatatanKhusus) {
+        super(name, CatatanKhusus);
     }
 
     @Override
-    public PetType getPetType() {
-        return PetType.ANJING;
+    public JenisHewan getJenisHewan() {
+        return JenisHewan.ANJING;
     }
 
     @Override
-    public BigDecimal getDailyRate() {
+    public BigDecimal getTarifHarian() {
         return new BigDecimal("60000");
     }
 }

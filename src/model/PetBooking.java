@@ -4,43 +4,40 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 public class PetBooking {
-    private final int bookingId;
-    private final String ownerName;
-    private final int ownerPhone;
-    private final Pet animal;
-    private final ServiceType serviceType;
+    private final int idBooking;
+    private final String namaPemilik;
+    private final String nomorTelpon;
+    private final Hewan hewan;
+    private final JenisLayanan jenisLayanan;
     private final int durationDays;
-    private BookingStatus status;
-    private final BigDecimal dailyRate;
+    private StatusPenitipan status;
+    private final BigDecimal tarifHarian;
     private final BigDecimal serviceFee;
     private BigDecimal totalBill;
 
-    public PetBooking(int bookingId, String ownerName, int ownerPhone,
-                          Pet animal, ServiceType serviceType, int durationDays) {
-        this(bookingId, ownerName, ownerPhone, animal, serviceType, durationDays,
-                BookingStatus.CHECK_IN);
+    public PetBooking(int idBooking, String namaPemilik, String nomorTelpon,
+                     Hewan hewan, JenisLayanan jenisLayanan, int durationDays) {
+        this(idBooking, namaPemilik, nomorTelpon, hewan, jenisLayanan, durationDays,
+                StatusPenitipan.CHECK_IN);
     }
 
-    public PetBooking(int bookingId, String ownerName, int ownerPhone,
-                          Pet animal, ServiceType serviceType, int durationDays, BookingStatus status) {
-        if (bookingId < 1) {
+    public PetBooking(int idBooking, String namaPemilik, String nomorTelpon,
+                     Hewan hewan, JenisLayanan jenisLayanan, int durationDays, StatusPenitipan status) {
+        if (idBooking < 1) {
             throw new IllegalArgumentException("ID booking harus lebih besar dari 0.");
         }
-        this.bookingId = bookingId;
-        this.ownerName = requireText(ownerName, "Nama pemilik");
-        if (ownerPhone < 1) {
-            throw new IllegalArgumentException("Nomor telepon harus lebih besar dari 0.");
-        }
-        this.ownerPhone = ownerPhone;
-        this.animal = Objects.requireNonNull(animal, "Hewan wajib dipilih.");
-        this.serviceType = Objects.requireNonNull(serviceType, "Layanan wajib dipilih.");
+        this.idBooking = idBooking;
+        this.namaPemilik = requireText(namaPemilik, "Nama pemilik");
+        this.nomorTelpon = requireText(nomorTelpon, "Nomor telepon");
+        this.hewan = Objects.requireNonNull(hewan, "Hewan wajib dipilih.");
+        this.jenisLayanan = Objects.requireNonNull(jenisLayanan, "Layanan wajib dipilih.");
         if (durationDays < 1) {
             throw new IllegalArgumentException("Durasi minimal 1 hari.");
         }
         this.durationDays = durationDays;
         this.status = Objects.requireNonNull(status, "Status booking wajib diisi.");
-        this.dailyRate = animal.getDailyRate();
-        this.serviceFee = serviceType == ServiceType.BOARDING
+        this.tarifHarian = hewan.getTarifHarian();
+        this.serviceFee = jenisLayanan == JenisLayanan.BOARDING
                 ? BigDecimal.ZERO : new BigDecimal("75000");
         this.totalBill = calculateTotalBill();
     }
@@ -53,31 +50,36 @@ public class PetBooking {
     }
 
     public BigDecimal calculateTotalBill() {
-        return serviceType.calculateTotal(dailyRate, durationDays);
+        return jenisLayanan.calculateTotal(tarifHarian, durationDays);
     }
 
+    /**
+     * Menyelesaikan booking. Harus berstatus PERAWATAN sebelum checkout dilakukan.
+     */
     public void markCheckedOut() {
-        if (status != BookingStatus.READY_FOR_CHECKOUT) {
-            throw new IllegalStateException("Booking harus berstatus Siap Check-Out sebelum checkout.");
+        if (status != StatusPenitipan.PERAWATAN) {
+            throw new IllegalStateException(
+                    "Booking harus berstatus Sedang Perawatan sebelum checkout.");
         }
         totalBill = calculateTotalBill();
-        status = BookingStatus.CHECKED_OUT;
+        status = StatusPenitipan.CHECK_OUT;
     }
 
-    public int getBookingId() { return bookingId; }
-    public String getOwnerName() { return ownerName; }
-    public int getOwnerPhone() { return ownerPhone; }
-    public Pet getAnimal() { return animal; }
-    public String getPetName() { return animal.getName(); }
-    public PetType getPetType() { return animal.getPetType(); }
-    public ServiceType getServiceType() { return serviceType; }
-    public int getDurationDays() { return durationDays; }
-    public BookingStatus getStatus() { return status; }
-    public BigDecimal getDailyRate() { return dailyRate; }
-    public BigDecimal getServiceFee() { return serviceFee; }
-    public BigDecimal getTotalBill() { return totalBill; }
+    public int getIdBooking()           { return idBooking; }
+    public String getNamaPemilik()      { return namaPemilik; }
+    public String getNomorTelpon()      { return nomorTelpon; }
+    public Hewan getHewan()             { return hewan; }
+    public String getNamaHewan()        { return hewan.getName(); }
+    public JenisHewan getJenisHewan()   { return hewan.getJenisHewan(); }
+    public String getCatatanKhusus()     { return hewan.getCatatanKhusus(); }
+    public JenisLayanan getJenisLayanan() { return jenisLayanan; }
+    public int getDurasiHari()          { return durationDays; }
+    public StatusPenitipan getStatus()  { return status; }
+    public BigDecimal getTarifHarian()  { return tarifHarian; }
+    public BigDecimal getServiceFee()   { return serviceFee; }
+    public BigDecimal getTotalBill()    { return totalBill; }
 
-    public void setStatus(BookingStatus status) {
+    public void setStatus(StatusPenitipan status) {
         this.status = Objects.requireNonNull(status, "Status booking wajib diisi.");
     }
 
