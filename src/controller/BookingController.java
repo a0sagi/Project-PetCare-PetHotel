@@ -161,8 +161,8 @@ public class BookingController {
                     + "========================================";
             view.showCheckoutInvoice(invoice);
             view.getPages().setSelectedIndex(5);
-            JOptionPane.showMessageDialog(view, invoice, "Rincian Tagihan",
-                    JOptionPane.INFORMATION_MESSAGE);
+            view.showCheckoutDialog(booking, displayServiceLabel(
+                    booking.getJenisLayanan().getLabel()));
         } catch (IllegalArgumentException | IllegalStateException | SQLException exception) {
             showError(exception);
         }

@@ -13,6 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class PetCareMainFrame extends JFrame {
     private final JLabel hotelCount = new JLabel("0");
     private final JLabel checkoutCount = new JLabel("0");
     private final JTextArea checkoutInvoice = new JTextArea(
-            "Pilih pemesanan berstatus Siap Check-Out, lalu tekan Check Out untuk melihat tagihan.");
+            "Pilih pemesanan pada tabel di atas untuk melihat rincian tagihannya.");
 
     public PetCareMainFrame() {
         super("Pet Care & Hotel Management");
@@ -319,6 +320,13 @@ public class PetCareMainFrame extends JFrame {
         });
         configureColumns(table, index);
         tables.add(table);
+        if (index == 5) {
+            table.getSelectionModel().addListSelectionListener(event -> {
+                if (!event.getValueIsAdjusting()) {
+                    updateCheckoutInvoiceFromSelection(table);
+                }
+            });
+        }
         JScrollPane tableScroll = new JScrollPane(table);
         tableScroll.setBackground(CREAM);
         tableScroll.getViewport().setBackground(Color.WHITE);
@@ -335,7 +343,7 @@ public class PetCareMainFrame extends JFrame {
             checkoutInvoice.setBackground(Color.WHITE);
             checkoutInvoice.setForeground(TEXT);
             checkoutInvoice.setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(BORDER), "Rincian Tagihan Terakhir"));
+                    BorderFactory.createLineBorder(BORDER), "Rincian Tagihan"));
             JScrollPane invoiceScroll = new JScrollPane(checkoutInvoice);
             invoiceScroll.setBorder(BorderFactory.createLineBorder(BORDER));
             page.add(invoiceScroll, BorderLayout.SOUTH);
@@ -357,6 +365,146 @@ public class PetCareMainFrame extends JFrame {
             return STATUS_DONE;
         }
         return Color.WHITE;
+    }
+
+    public void showCheckoutDialog(PetBooking booking, String serviceLabel) {
+        JDialog dialog = new JDialog(this, "Rincian Tagihan", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setUndecorated(true);
+        dialog.setModal(true);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+
+        JPanel surface = new InvoiceDialogSurface();
+        surface.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+
+        JPanel header = new InvoiceDialogHeader();
+        JLabel title = new JLabel("Rincian Tagihan");
+        title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 17));
+        title.setForeground(TEXT);
+        title.setBorder(BorderFactory.createEmptyBorder(0, 22, 0, 0));
+        header.add(title, BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("×");
+        closeButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 26));
+        closeButton.setForeground(TEXT);
+        closeButton.setBorder(BorderFactory.createEmptyBorder());
+        closeButton.setContentAreaFilled(false);
+        closeButton.setFocusPainted(false);
+        closeButton.setPreferredSize(new Dimension(48, 48));
+        closeButton.addActionListener(event -> dialog.dispose());
+        header.add(closeButton, BorderLayout.EAST);
+        surface.add(header, BorderLayout.NORTH);
+
+        JPanel content = new JPanel(new BorderLayout(0, 9));
+        content.setOpaque(false);
+        content.setBorder(BorderFactory.createEmptyBorder(14, 26, 12, 26));
+
+        JPanel sectionHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 9, 0));
+        sectionHeader.setOpaque(false);
+        sectionHeader.add(new InvoiceInfoIcon());
+        JLabel sectionTitle = new JLabel("TAGIHAN PERAWATAN & PENITIPAN");
+        sectionTitle.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+        sectionTitle.setForeground(TEXT);
+        sectionHeader.add(sectionTitle);
+        content.add(sectionHeader, BorderLayout.NORTH);
+
+        String serviceDetails = serviceLabel;
+        if (booking.getJenisLayanan() != JenisLayanan.GROOMING) {
+            serviceDetails += " (" + booking.getDurasiHari() + " hari)";
+        }
+        JPanel details = new JPanel(new GridLayout(4, 1, 0, 8));
+        details.setOpaque(false);
+        details.add(createInvoiceRow("ID Pemesanan", Integer.toString(booking.getIdBooking())));
+        details.add(createInvoiceRow("Pemilik", booking.getNamaPemilik()));
+        details.add(createInvoiceRow("Peliharaan", booking.getNamaHewan() + " ("
+                + booking.getJenisHewan().getLabel() + ")"));
+        details.add(createInvoiceRow("Layanan", serviceDetails));
+        content.add(details, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel();
+        bottom.setOpaque(false);
+        bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
+        RoundedPanel totalBanner = new RoundedPanel(new BorderLayout(12, 0),
+                20, DARK_SAGE, false);
+        totalBanner.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
+        JLabel totalLabel = new JLabel("TOTAL LAYANAN");
+        totalLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        totalLabel.setForeground(TEXT);
+        JLabel totalAmount = new JLabel(NumberFormat
+                .getCurrencyInstance(Locale.forLanguageTag("id-ID"))
+                .format(booking.getTotalBill()));
+        totalAmount.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 22));
+        totalAmount.setForeground(TEXT);
+        totalBanner.add(totalLabel, BorderLayout.WEST);
+        totalBanner.add(totalAmount, BorderLayout.EAST);
+        totalBanner.setPreferredSize(new Dimension(0, 64));
+        totalBanner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 64));
+        bottom.add(totalBanner);
+        bottom.add(Box.createVerticalStrut(10));
+
+        JButton okButton = new JButton("OK");
+        okButton.putClientProperty("FlatLaf.style", "arc: 20");
+        okButton.setBackground(DARK_SAGE);
+        okButton.setForeground(TEXT);
+        okButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+        okButton.setFocusPainted(false);
+        okButton.setPreferredSize(new Dimension(105, 38));
+        okButton.setMinimumSize(new Dimension(105, 38));
+        okButton.setMaximumSize(new Dimension(105, 38));
+        okButton.addActionListener(event -> dialog.dispose());
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        actions.setOpaque(false);
+        actions.add(okButton);
+        actions.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        bottom.add(actions);
+        content.add(bottom, BorderLayout.SOUTH);
+        surface.add(content, BorderLayout.CENTER);
+
+        dialog.setContentPane(surface);
+        dialog.setSize(560, 340);
+        dialog.getRootPane().setDefaultButton(okButton);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    private JPanel createInvoiceRow(String key, String value) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+        JLabel label = new JLabel(key);
+        label.setPreferredSize(new Dimension(180, 22));
+        label.setForeground(SECONDARY_TEXT);
+        label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        JLabel detail = new JLabel(value);
+        detail.setForeground(TEXT);
+        detail.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+        row.add(label, BorderLayout.WEST);
+        row.add(detail, BorderLayout.CENTER);
+        return row;
+    }
+
+    private void updateCheckoutInvoiceFromSelection(JTable table) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            checkoutInvoice.setText(
+                    "Pilih pemesanan pada tabel di atas untuk melihat rincian tagihannya.");
+            return;
+        }
+
+        int modelRow = table.convertRowIndexToModel(selectedRow);
+        String service = String.valueOf(tableModel.getValueAt(modelRow, 6));
+        StringBuilder invoice = new StringBuilder("======= TAGIHAN PERAWATAN & PENITIPAN =======\n")
+                .append("ID Pemesanan : ").append(tableModel.getValueAt(modelRow, 0)).append('\n')
+                .append("Pemilik      : ").append(tableModel.getValueAt(modelRow, 1)).append('\n')
+                .append("Peliharaan   : ").append(tableModel.getValueAt(modelRow, 3)).append(" (")
+                .append(tableModel.getValueAt(modelRow, 4)).append(")\n")
+                .append("Layanan      : ").append(service).append('\n');
+        if (!"Perawatan".equals(service)) {
+            invoice.append("Durasi       : ").append(tableModel.getValueAt(modelRow, 7)).append('\n');
+        }
+        invoice.append("TOTAL LAYANAN: ").append(tableModel.getValueAt(modelRow, 9)).append('\n')
+                .append("========================================");
+        checkoutInvoice.setText(invoice.toString());
+        checkoutInvoice.setCaretPosition(0);
     }
 
     private JPanel createDashboardSummary() {
@@ -381,6 +529,80 @@ public class PetCareMainFrame extends JFrame {
         card.add(titleLabel, BorderLayout.NORTH);
         card.add(value, BorderLayout.CENTER);
         return card;
+    }
+
+    private static class InvoiceDialogSurface extends JPanel {
+        InvoiceDialogSurface() {
+            super(new BorderLayout());
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            RoundRectangle2D shape = new RoundRectangle2D.Float(
+                    0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 20, 20);
+            g2.setColor(CREAM);
+            g2.fill(shape);
+            g2.setColor(SAGE);
+            g2.draw(shape);
+            g2.dispose();
+        }
+    }
+
+    private static class InvoiceDialogHeader extends JPanel {
+        InvoiceDialogHeader() {
+            super(new BorderLayout());
+            setOpaque(false);
+            setPreferredSize(new Dimension(0, 50));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int width = getWidth();
+            int height = getHeight();
+            Path2D header = new Path2D.Float();
+            header.moveTo(20, 0);
+            header.quadTo(0, 0, 0, 20);
+            header.lineTo(0, height);
+            header.lineTo(width, height);
+            header.lineTo(width, 20);
+            header.quadTo(width, 0, width - 20, 0);
+            header.closePath();
+            g2.setColor(SAGE);
+            g2.fill(header);
+            g2.setColor(SAGE.darker());
+            g2.drawLine(0, height - 1, width, height - 1);
+            g2.dispose();
+            super.paintComponent(graphics);
+        }
+    }
+
+    private static class InvoiceInfoIcon extends JComponent {
+        InvoiceInfoIcon() {
+            setPreferredSize(new Dimension(22, 22));
+            setMinimumSize(getPreferredSize());
+            setMaximumSize(getPreferredSize());
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(SAGE);
+            g2.fillOval(1, 1, getWidth() - 2, getHeight() - 2);
+            g2.setColor(TEXT);
+            g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+            FontMetrics metrics = g2.getFontMetrics();
+            String info = "i";
+            int x = (getWidth() - metrics.stringWidth(info)) / 2;
+            int y = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
+            g2.drawString(info, x, y);
+            g2.dispose();
+        }
     }
 
     private static class RoundedPanel extends JPanel {
