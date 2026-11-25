@@ -24,6 +24,9 @@ public class PetCareMainFrame extends JFrame {
     private static final Color SAGE = new Color(0xB6CCB0);
     private static final Color DARK_SAGE = new Color(0x7C9A76);
     private static final Color PINK = new Color(0xF8E6F0);
+    private static final Color STATUS_CHECKIN = new Color(0xDCFFD4); //warna check-in
+    private static final Color STATUS_DONE = new Color(0xBABABA); //warna sudah selesai
+    private static final Color STATUS_CARE = new Color(0xFFF0CC); //warna sedang dirawat
     private static final Color BORDER = new Color(0x8EA888);
     private static final Color TEXT = new Color(0x2B2F2B);
     private static final Color SECONDARY_TEXT = new Color(0x5A625A);
@@ -45,7 +48,7 @@ public class PetCareMainFrame extends JFrame {
             new JComboBox<>(new String[]{"Perawatan", "Penitipan", "Layanan Lengkap"});
     private final JComboBox<String> statusBox =
             new JComboBox<>(new String[]{
-                    "Check-In", "Sedang Dirawat", "Siap Check-Out", "Dibatalkan"
+                    "Check-In", "Sedang Dirawat", "Siap Check-Out"
             });
     private final JSpinner durationSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 365, 1));
     private final JLabel durationLabel = new JLabel("Durasi (hari)");
@@ -181,8 +184,7 @@ public class PetCareMainFrame extends JFrame {
             styleInput(((JSpinner.DefaultEditor) spinnerEditor).getTextField());
         }
         styleButton(addBookingButton, DARK_SAGE, Color.WHITE, true);
-        addBookingButton.setBorder(new FlatDropShadowBorder(new Color(0, 0, 0), 4, 0.18f));
-        styleButton(updateDataButton, new Color(0xB9CEB4), SECONDARY_TEXT, false);
+        styleButton(updateDataButton, DARK_SAGE, Color.WHITE, false);
         updateDataButton.putClientProperty("FlatLaf.style",
                 "arc: 12; disabledBackground: #B9CEB4; disabledTextColor: #5A625A");
         styleButton(checkoutButton, DARK_SAGE, Color.WHITE, true);
@@ -288,6 +290,17 @@ public class PetCareMainFrame extends JFrame {
         table.setSelectionBackground(SAGE);
         table.setSelectionForeground(TEXT);
         table.setGridColor(new Color(0xE2E9DF));
+        table.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable source, Object value,
+                    boolean selected, boolean focused, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                        source, value, selected, focused, row, column);
+                label.setForeground(TEXT);
+                label.setBackground(statusColor(value));
+                return label;
+            }
+        });
         table.getTableHeader().setBackground(SAGE);
         table.getTableHeader().setForeground(TEXT);
         table.getTableHeader().setFont(table.getTableHeader().getFont().deriveFont(Font.BOLD));
@@ -328,6 +341,22 @@ public class PetCareMainFrame extends JFrame {
             page.add(invoiceScroll, BorderLayout.SOUTH);
         }
         return page;
+    }
+
+    private Color statusColor(Object value) {
+        if ("Check-In".equals(value)) {
+            return STATUS_CHECKIN;
+        }
+        if ("Sedang Dirawat".equals(value)) {
+            return STATUS_CARE;
+        }
+        if ("Siap Check-Out".equals(value)) {
+            return PINK;
+        }
+        if ("Selesai".equals(value)) {
+            return STATUS_DONE;
+        }
+        return Color.WHITE;
     }
 
     private JPanel createDashboardSummary() {
@@ -429,25 +458,38 @@ public class PetCareMainFrame extends JFrame {
             Graphics2D g2 = (Graphics2D) graphics.create();
             g2.translate(x, y);
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // 1. Outline rumah segi lima tegak dengan sudut membulat
             g2.setColor(new Color(0x829C7E));
-            g2.setStroke(new BasicStroke(3.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.setStroke(new BasicStroke(4.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             Path2D house = new Path2D.Float();
-            house.moveTo(6, 22);
-            house.lineTo(25, 6);
-            house.lineTo(44, 22);
-            house.lineTo(41, 43);
-            house.lineTo(9, 43);
+            house.moveTo(25, 6);   // Puncak atap
+            house.lineTo(43, 21);  // Sudut kanan atap
+            house.lineTo(43, 42);  // Sudut kanan bawah (tegak lurus)
+            house.lineTo(7, 42);   // Sudut kiri bawah (tegak lurus)
+            house.lineTo(7, 21);   // Sudut kiri atap
             house.closePath();
             g2.draw(house);
+
+            // 2. Empat jari oval putih krem (simetris kiri-kanan)
             g2.setColor(CREAM);
-            g2.fillOval(15, 20, 6, 8);
-            g2.fillOval(22, 17, 6, 8);
-            g2.fillOval(29, 20, 6, 8);
-            g2.fillOval(18, 28, 6, 7);
+            g2.fillOval(13, 22, 5, 7); // Jari paling kiri
+            g2.fillOval(19, 18, 5, 7); // Jari tengah kiri
+            g2.fillOval(26, 18, 5, 7); // Jari tengah kanan
+            g2.fillOval(32, 22, 5, 7); // Jari paling kanan
+
+            // 3. Bantalan telapak utama merah muda pastel (3 lobus menyatu rapi)
             g2.setColor(PINK);
-            g2.fillOval(23, 28, 7, 7);
-            g2.fillOval(20, 34, 6, 5);
-            g2.fillOval(27, 34, 6, 5);
+            Path2D pad = new Path2D.Float();
+            pad.moveTo(25, 29);
+            pad.curveTo(22, 26, 18, 29, 17, 33);
+            pad.curveTo(16, 37, 20, 38, 23, 37);
+            pad.quadTo(25, 39, 27, 37);
+            pad.curveTo(30, 38, 34, 37, 33, 33);
+            pad.curveTo(32, 29, 28, 26, 25, 29);
+            pad.closePath();
+            g2.fill(pad);
+
             g2.dispose();
         }
     }
