@@ -4,10 +4,15 @@ import model.JenisLayanan;
 import model.PetBooking;
 import model.StatusPenitipan;
 
+import com.formdev.flatlaf.ui.FlatDropShadowBorder;
+import javax.swing.border.AbstractBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -15,6 +20,14 @@ import java.util.List;
 import java.util.Locale;
 
 public class PetCareMainFrame extends JFrame {
+    private static final Color CREAM = new Color(0xFAF9F2);
+    private static final Color SAGE = new Color(0xB6CCB0);
+    private static final Color DARK_SAGE = new Color(0x7C9A76);
+    private static final Color PINK = new Color(0xF8E6F0);
+    private static final Color BORDER = new Color(0x8EA888);
+    private static final Color TEXT = new Color(0x2B2F2B);
+    private static final Color SECONDARY_TEXT = new Color(0x5A625A);
+
     private static final String[] TAB_NAMES = {
             "Ringkasan", "Data Pemilik", "Data Hewan", "Perawatan Hewan",
             "Penitipan Hewan", "Tagihan"
@@ -59,35 +72,61 @@ public class PetCareMainFrame extends JFrame {
         super("Pet Care & Hotel Management");
         setCheckoutEnabled(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(12, 12));
-        getRootPane().setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+        getContentPane().setBackground(CREAM);
+        setLayout(new BorderLayout());
         add(createHeader(), BorderLayout.NORTH);
-        add(createFormPanel(), BorderLayout.WEST);
-        add(createContentPanel(), BorderLayout.CENTER);
+        JPanel workspace = new JPanel(new BorderLayout(14, 0));
+        workspace.setBackground(CREAM);
+        workspace.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER),
+                BorderFactory.createEmptyBorder(14, 14, 14, 14)));
+        workspace.add(createFormPanel(), BorderLayout.WEST);
+        workspace.add(createContentPanel(), BorderLayout.CENTER);
+        add(workspace, BorderLayout.CENTER);
         setMinimumSize(new java.awt.Dimension(1100, 650));
         setSize(1240, 730);
         setLocationRelativeTo(null);
     }
 
     private JPanel createHeader() {
-        JPanel header = new JPanel(new BorderLayout());
-        JLabel title = new JLabel("Pet Care & Hotel Management");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
+        JPanel header = new JPanel(new BorderLayout(14, 0));
+        header.setBackground(SAGE);
+        JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        brand.setOpaque(false);
+        JLabel icon = new JLabel(new HousePawIcon());
+        JPanel titles = new JPanel();
+        titles.setOpaque(false);
+        titles.setLayout(new BoxLayout(titles, BoxLayout.Y_AXIS));
+        JLabel petCare = new JLabel("Pet Care");
+        petCare.setFont(petCare.getFont().deriveFont(Font.BOLD, 26f));
+        petCare.setForeground(TEXT);
+        JLabel subtitle = new JLabel("& Hotel Management");
+        subtitle.setFont(subtitle.getFont().deriveFont(Font.BOLD, 17f));
+        subtitle.setForeground(TEXT);
+        titles.add(petCare);
+        titles.add(subtitle);
+        brand.add(icon);
+        brand.add(titles);
         JLabel date = new JLabel(LocalDate.now()
                 .format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", new Locale("id", "ID"))));
-        date.setForeground(new Color(95, 107, 120));
-        header.add(title, BorderLayout.WEST);
+        date.setForeground(SECONDARY_TEXT);
+        header.add(brand, BorderLayout.WEST);
         header.add(date, BorderLayout.EAST);
-        header.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        header.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
         return header;
     }
 
     private JPanel createContentPanel() {
         JPanel content = new JPanel(new BorderLayout(8, 8));
+        content.setBackground(CREAM);
         content.add(createToolbar(), BorderLayout.NORTH);
         for (int index = 0; index < TAB_NAMES.length; index++) {
             pages.addTab(TAB_NAMES[index], createPage(index));
         }
+        pages.putClientProperty("FlatLaf.style",
+                "selectedBackground: #B6CCB0; underlineColor: #7C9A76; tabArc: 12; tabHeight: 32");
+        pages.setBackground(CREAM);
+        pages.setForeground(TEXT);
         pages.addChangeListener(event -> updateStatusControlsVisibility());
         updateStatusControlsVisibility();
         content.add(pages, BorderLayout.CENTER);
@@ -96,7 +135,12 @@ public class PetCareMainFrame extends JFrame {
 
     private JPanel createToolbar() {
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        toolbar.setBackground(CREAM);
         toolbar.add(new JLabel("Cari pemilik / hewan / ID pemesanan"));
+        styleInput(searchField);
+        styleButton(searchButton, SAGE, TEXT, false);
+        styleButton(deleteButton, PINK, TEXT, false);
+        styleButton(resetButton, Color.WHITE, TEXT, false);
         toolbar.add(searchField);
         toolbar.add(searchButton);
         toolbar.add(deleteButton);
@@ -107,14 +151,43 @@ public class PetCareMainFrame extends JFrame {
     }
 
     private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Pendaftaran Layanan"));
+        RoundedPanel panel = new RoundedPanel(new BorderLayout(8, 8), 16, CREAM, true);
+        panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        panel.setPreferredSize(new java.awt.Dimension(340, 420));
+        RoundedPanel badge = new RoundedPanel(new FlowLayout(FlowLayout.LEFT, 8, 3),
+                12, SAGE, false);
+        badge.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+        JLabel badgeTitle = new JLabel("Pendaftaran Layanan");
+        badgeTitle.setForeground(TEXT);
+        badgeTitle.setFont(badgeTitle.getFont().deriveFont(Font.BOLD));
+        badge.add(badgeTitle);
+        panel.add(badge, BorderLayout.NORTH);
 
         JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
         String[] labels = {"ID Pemesanan", "Nama Pemilik", "No. HP", "Nama Hewan",
                 "Catatan Khusus", "Jenis Hewan", "Layanan", "Durasi (hari)"};
         java.awt.Component[] fields = {idBookingField, namaPemilikField, nomorTelponField,
                 namaHewanField, catatanKhususField, jenisHewanBox, serviceBox, durationSpinner};
+        for (java.awt.Component field : fields) {
+            if (field instanceof JComponent) {
+                styleInput((JComponent) field);
+            }
+        }
+        styleInput(searchField);
+        JComponent spinnerEditor = (JComponent) durationSpinner.getEditor();
+        styleInput(spinnerEditor);
+        if (spinnerEditor instanceof JSpinner.DefaultEditor) {
+            styleInput(((JSpinner.DefaultEditor) spinnerEditor).getTextField());
+        }
+        styleButton(addBookingButton, DARK_SAGE, Color.WHITE, true);
+        addBookingButton.setBorder(new FlatDropShadowBorder(new Color(0, 0, 0), 4, 0.18f));
+        styleButton(updateDataButton, new Color(0xB9CEB4), SECONDARY_TEXT, false);
+        updateDataButton.putClientProperty("FlatLaf.style",
+                "arc: 12; disabledBackground: #B9CEB4; disabledTextColor: #5A625A");
+        styleButton(checkoutButton, DARK_SAGE, Color.WHITE, true);
+        styleButton(boardingCheckoutButton, DARK_SAGE, Color.WHITE, true);
+        styleInput(statusBox);
         for (int row = 0; row < labels.length; row++) {
             GridBagConstraints constraints = new GridBagConstraints();
             constraints.insets = new Insets(6, 5, 6, 5);
@@ -129,33 +202,38 @@ public class PetCareMainFrame extends JFrame {
         }
         JLabel hint = new JLabel("<html>Isi data pemesanan, lalu tekan Tambah Pemesanan.<br>"
                 + "Pilih baris tabel untuk memperbarui status atau data.</html>");
-        hint.setForeground(new Color(95, 107, 120));
+        hint.setForeground(SECONDARY_TEXT);
         hint.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5));
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
+        actions.setOpaque(false);
         actions.add(addBookingButton);
         updateDataButton.setEnabled(false);
         actions.add(updateDataButton);
-        GridBagConstraints panelConstraints = new GridBagConstraints();
-        panelConstraints.gridx = 0;
-        panelConstraints.gridy = 0;
-        panelConstraints.weightx = 1;
-        panelConstraints.fill = GridBagConstraints.HORIZONTAL;
-        panelConstraints.insets = new Insets(0, 4, 0, 4);
-        panel.add(form, panelConstraints);
-        panelConstraints.gridy = 1;
-        panelConstraints.insets = new Insets(4, 4, 0, 4);
-        panel.add(actions, panelConstraints);
-        panelConstraints.gridy = 2;
-        panelConstraints.insets = new Insets(4, 4, 0, 4);
-        panel.add(hint, panelConstraints);
-        panelConstraints.gridy = 3;
-        panelConstraints.weighty = 1;
-        panelConstraints.fill = GridBagConstraints.BOTH;
-        panel.add(new JPanel(), panelConstraints);
-        panel.setPreferredSize(new java.awt.Dimension(340, 420));
+        JPanel body = new JPanel(new BorderLayout(4, 4));
+        body.setOpaque(false);
+        body.add(form, BorderLayout.NORTH);
+        body.add(actions, BorderLayout.CENTER);
+        body.add(hint, BorderLayout.SOUTH);
+        panel.add(body, BorderLayout.CENTER);
         serviceBox.addActionListener(event -> updateDurationVisibility());
         updateDurationVisibility();
         return panel;
+    }
+
+    private void styleInput(JComponent component) {
+        component.putClientProperty("FlatLaf.style",
+                "arc: 12; borderColor: #8EA888; focusedBorderColor: #7C9A76; background: #FFFFFF");
+        component.setForeground(TEXT);
+    }
+
+    private void styleButton(JButton button, Color background, Color foreground, boolean bold) {
+        button.putClientProperty("FlatLaf.style", "arc: 12");
+        button.setBackground(background);
+        button.setForeground(foreground);
+        button.setFocusPainted(false);
+        if (bold) {
+            button.setFont(button.getFont().deriveFont(Font.BOLD));
+        }
     }
 
     private void updateDurationVisibility() {
@@ -179,14 +257,16 @@ public class PetCareMainFrame extends JFrame {
 
     private JPanel createPage(int index) {
         JPanel page = new JPanel(new BorderLayout(8, 8));
+        page.setBackground(CREAM);
         if (index == 0) {
             page.add(createDashboardSummary(), BorderLayout.NORTH);
         } else {
             JLabel description = new JLabel(pageDescription(index));
             description.setBorder(BorderFactory.createEmptyBorder(6, 4, 2, 4));
-            description.setForeground(new Color(95, 107, 120));
+            description.setForeground(SECONDARY_TEXT);
             if (index == 3 || index == 4) {
                 JPanel pageHeader = new JPanel(new BorderLayout());
+                pageHeader.setBackground(CREAM);
                 pageHeader.add(description, BorderLayout.CENTER);
                 pageHeader.add(index == 3 ? checkoutButton : boardingCheckoutButton,
                         BorderLayout.EAST);
@@ -203,39 +283,173 @@ public class PetCareMainFrame extends JFrame {
         sorters.add(sorter);
         table.setFillsViewportHeight(true);
         table.setRowHeight(26);
+        table.setBackground(Color.WHITE);
+        table.setForeground(TEXT);
+        table.setSelectionBackground(SAGE);
+        table.setSelectionForeground(TEXT);
+        table.setGridColor(new Color(0xE2E9DF));
+        table.getTableHeader().setBackground(SAGE);
+        table.getTableHeader().setForeground(TEXT);
+        table.getTableHeader().setFont(table.getTableHeader().getFont().deriveFont(Font.BOLD));
+        table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable source, Object value,
+                    boolean selected, boolean focused, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                        source, value, selected, focused, row, column);
+                label.setOpaque(true);
+                label.setBackground(SAGE);
+                label.setForeground(TEXT);
+                label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 1, BORDER));
+                return label;
+            }
+        });
         configureColumns(table, index);
         tables.add(table);
-        page.add(new JScrollPane(table), BorderLayout.CENTER);
+        JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setBackground(CREAM);
+        tableScroll.getViewport().setBackground(Color.WHITE);
+        tableScroll.setBorder(BorderFactory.createCompoundBorder(
+                new FlatDropShadowBorder(new Color(0, 0, 0), new Insets(0, 0, 4, 0), 0.12f),
+                new RoundedLineBorder(BORDER, 12)));
+        page.add(tableScroll, BorderLayout.CENTER);
         if (index == 5) {
             checkoutInvoice.setEditable(false);
             checkoutInvoice.setLineWrap(true);
             checkoutInvoice.setWrapStyleWord(true);
             checkoutInvoice.setRows(5);
             checkoutInvoice.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-            checkoutInvoice.setBorder(BorderFactory.createTitledBorder("Rincian Tagihan Terakhir"));
-            page.add(new JScrollPane(checkoutInvoice), BorderLayout.SOUTH);
+            checkoutInvoice.setBackground(Color.WHITE);
+            checkoutInvoice.setForeground(TEXT);
+            checkoutInvoice.setBorder(BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(BORDER), "Rincian Tagihan Terakhir"));
+            JScrollPane invoiceScroll = new JScrollPane(checkoutInvoice);
+            invoiceScroll.setBorder(BorderFactory.createLineBorder(BORDER));
+            page.add(invoiceScroll, BorderLayout.SOUTH);
         }
         return page;
     }
 
     private JPanel createDashboardSummary() {
         JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
-        summary.add(statCard("Semua Pemesanan", totalCount));
-        summary.add(statCard("Perawatan Hewan", careCount));
-        summary.add(statCard("Penitipan Hewan", hotelCount));
-        summary.add(statCard("Pelunasan Selesai", checkoutCount));
+        summary.setBackground(CREAM);
+        summary.add(statCard("Semua Pemesanan", totalCount, SAGE));
+        summary.add(statCard("Perawatan Hewan", careCount, PINK));
+        summary.add(statCard("Penitipan Hewan", hotelCount, PINK));
+        summary.add(statCard("Pelunasan Selesai", checkoutCount, PINK));
         return summary;
     }
 
-    private JPanel statCard(String title, JLabel value) {
-        JPanel card = new JPanel(new BorderLayout(8, 4));
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 226, 231)),
-                BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+    private JPanel statCard(String title, JLabel value, Color background) {
+        RoundedPanel card = new RoundedPanel(new BorderLayout(8, 4), 16, background, true);
+        card.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        card.setPreferredSize(new Dimension(138, 86));
+        JLabel titleLabel = new JLabel("<html>" + title + "</html>");
+        titleLabel.setForeground(TEXT);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.PLAIN, 12f));
         value.setFont(value.getFont().deriveFont(Font.BOLD, 20f));
-        card.add(new JLabel(title), BorderLayout.NORTH);
+        value.setForeground(TEXT);
+        card.add(titleLabel, BorderLayout.NORTH);
         card.add(value, BorderLayout.CENTER);
         return card;
+    }
+
+    private static class RoundedPanel extends JPanel {
+        private final int arc;
+        private final boolean shadow;
+
+        RoundedPanel(LayoutManager layout, int arc, Color background, boolean shadow) {
+            super(layout);
+            this.arc = arc;
+            this.shadow = shadow;
+            setBackground(background);
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int inset = shadow ? 4 : 0;
+            if (shadow) {
+                g2.setColor(new Color(43, 47, 43, 18));
+                g2.fill(new RoundRectangle2D.Float(5, 6, getWidth() - 10, getHeight() - 10,
+                        arc, arc));
+            }
+            RoundRectangle2D shape = new RoundRectangle2D.Float(
+                    inset, inset, getWidth() - inset * 2 - 1, getHeight() - inset * 2 - 1,
+                    arc, arc);
+            g2.setColor(getBackground());
+            g2.fill(shape);
+            g2.setColor(BORDER);
+            g2.draw(shape);
+            g2.dispose();
+            super.paintComponent(graphics);
+        }
+    }
+
+    private static class RoundedLineBorder extends AbstractBorder {
+        private final Color color;
+        private final int arc;
+
+        RoundedLineBorder(Color color, int arc) {
+            this.color = color;
+            this.arc = arc;
+        }
+
+        @Override
+        public void paintBorder(Component component, Graphics graphics,
+                int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.drawRoundRect(x, y, width - 1, height - 1, arc, arc);
+            g2.dispose();
+        }
+
+        @Override
+        public Insets getBorderInsets(Component component) {
+            return new Insets(2, 2, 2, 2);
+        }
+    }
+
+    private static class HousePawIcon implements Icon {
+        @Override
+        public int getIconWidth() {
+            return 50;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 50;
+        }
+
+        @Override
+        public void paintIcon(Component component, Graphics graphics, int x, int y) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.translate(x, y);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(0x829C7E));
+            g2.setStroke(new BasicStroke(3.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            Path2D house = new Path2D.Float();
+            house.moveTo(6, 22);
+            house.lineTo(25, 6);
+            house.lineTo(44, 22);
+            house.lineTo(41, 43);
+            house.lineTo(9, 43);
+            house.closePath();
+            g2.draw(house);
+            g2.setColor(CREAM);
+            g2.fillOval(15, 20, 6, 8);
+            g2.fillOval(22, 17, 6, 8);
+            g2.fillOval(29, 20, 6, 8);
+            g2.fillOval(18, 28, 6, 7);
+            g2.setColor(PINK);
+            g2.fillOval(23, 28, 7, 7);
+            g2.fillOval(20, 34, 6, 5);
+            g2.fillOval(27, 34, 6, 5);
+            g2.dispose();
+        }
     }
 
     private String pageDescription(int index) {
