@@ -325,7 +325,6 @@ public class BookingController {
             case "Check-In" -> StatusPenitipan.CHECK_IN;
             case "Sedang Dirawat" -> StatusPenitipan.PERAWATAN;
             case "Siap Check-Out" -> StatusPenitipan.SIAP_CHECKOUT;
-            case "Dibatalkan" -> StatusPenitipan.DIBATALKAN;
             default -> throw new IllegalArgumentException("Status tidak dikenal: " + label);
         };
     }
@@ -344,7 +343,6 @@ public class BookingController {
             case "Check-In" -> "Check-In";
             case "Sedang Perawatan" -> "Sedang Dirawat";
             case "Check-Out" -> "Selesai";
-            case "Dibatalkan" -> "Dibatalkan";
             default -> label;
         };
     }

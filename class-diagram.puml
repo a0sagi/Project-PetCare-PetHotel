@@ -1,0 +1,179 @@
+@startuml
+title Class Diagram - Pet Care & Hotel
+skinparam classAttributeIconSize 0
+
+package "default package" {
+    class Main {
+        +main(args: String[]): void
+        -launchGui(databaseMode: boolean): void
+        -runConsoleDemo(): void
+    }
+}
+
+package "controller" {
+    class BookingController {
+        -view: PetCareMainFrame
+        -service: BookingService
+        +BookingController(view, service)
+        -registerBooking(): void
+        -updateBookingData(): void
+        -updateStatus(): void
+        -checkout(): void
+        -deleteBooking(): void
+        -searchBookings(): void
+    }
+}
+
+package "view" {
+    class PetCareMainFrame {
+        +showBookings(bookings: List<PetBooking>): void
+        +filterPages(query: String): void
+        +showCheckoutInvoice(invoice: String): void
+    }
+
+    class BookingTableModel {
+        +setBookings(bookings: List<PetBooking>): void
+        +addBooking(booking: PetBooking): void
+        +updateBooking(row: int, booking: PetBooking): void
+        -toRow(booking: PetBooking): Object[]
+    }
+}
+
+package "service" {
+    class BookingService {
+        -repository: BookingRepository
+        -dao: BookingDAO
+        +register(idBooking: int, namaPemilik: String, nomorTelpon: String, hewan: Hewan, jenisLayanan: JenisLayanan, durationDays: int): PetBooking
+        +updateBooking(idBooking: int, namaPemilik: String, nomorTelpon: String, hewan: Hewan, jenisLayanan: JenisLayanan, durationDays: int): PetBooking
+        +updateStatus(idBooking: int, status: StatusPenitipan): StatusPenitipan
+        +checkout(idBooking: int): PetBooking
+        +searchBookings(query: String): List<PetBooking>
+        +getAllBookings(): List<PetBooking>
+        +deleteBooking(idBooking: int): void
+        +findById(idBooking: int): PetBooking
+    }
+}
+
+package "repository" {
+    class BookingRepository {
+        -bookingList: List<PetBooking>
+        -bookingMap: Map<Integer, PetBooking>
+        +addBooking(booking: PetBooking): void
+        +findById(idBooking: int): PetBooking
+        +getAllBookings(): List<PetBooking>
+        +updateBooking(booking: PetBooking): void
+        +updateStatus(idBooking: int, status: StatusPenitipan): void
+        +deleteBooking(idBooking: int): void
+    }
+}
+
+package "database" {
+    class BookingDAO {
+        +insert(booking: PetBooking): void
+        +findAll(): List<PetBooking>
+        +search(query: String): List<PetBooking>
+        +updateBooking(booking: PetBooking): void
+        +updateStatus(idBooking: int, status: StatusPenitipan): void
+        +checkout(booking: PetBooking): void
+        +delete(idBooking: int): void
+    }
+
+    class DatabaseConnection {
+        +{static} getConnection(): Connection
+    }
+}
+
+package "model" {
+    class PetBooking {
+        -idBooking: int
+        -namaPemilik: String
+        -nomorTelpon: String
+        -hewan: Hewan
+        -jenisLayanan: JenisLayanan
+        -durationDays: int
+        -status: StatusPenitipan
+        -tarifHarian: BigDecimal
+        -serviceFee: BigDecimal
+        -totalBill: BigDecimal
+        +calculateTotalBill(): BigDecimal
+        +markCheckedOut(): void
+    }
+
+    abstract class Hewan {
+        -name: String
+        -CatatanKhusus: String
+        +getJenisHewan(): JenisHewan
+        +getTarifHarian(): BigDecimal
+    }
+
+    class Anjing {
+        +getJenisHewan(): JenisHewan
+        +getTarifHarian(): BigDecimal
+    }
+
+    class Kucing {
+        +getJenisHewan(): JenisHewan
+        +getTarifHarian(): BigDecimal
+    }
+
+    class Kelinci {
+        +getJenisHewan(): JenisHewan
+        +getTarifHarian(): BigDecimal
+    }
+
+    class HewanFactory {
+        +{static} create(jenisHewan: JenisHewan, namaHewan: String): Hewan
+        +{static} create(jenisHewan: JenisHewan, namaHewan: String, catatanKhusus: String): Hewan
+    }
+
+    enum JenisHewan {
+        KUCING
+        ANJING
+        KELINCI
+    }
+
+    enum JenisLayanan {
+        GROOMING
+        BOARDING
+        FULL_SERVICE
+        +calculateTotal(dailyRate: BigDecimal, durationDays: int): BigDecimal
+    }
+
+    enum StatusPenitipan {
+        CHECK_IN
+        PERAWATAN
+        SIAP_CHECKOUT
+        CHECK_OUT
+        +next(): StatusPenitipan
+    }
+}
+
+Main ..> BookingService : creates
+Main ..> BookingController : creates
+Main ..> PetCareMainFrame : creates
+BookingController --> PetCareMainFrame : handles
+BookingController --> BookingService : delegates to
+PetCareMainFrame *-- BookingTableModel
+BookingTableModel ..> PetBooking : displays
+
+BookingService --> BookingRepository : uses
+BookingService --> BookingDAO : optional persistence
+BookingRepository "1" o-- "0..*" PetBooking : stores
+BookingDAO ..> DatabaseConnection : connects through
+BookingDAO ..> PetBooking : reads/writes
+
+PetBooking "0..*" --> "1" Hewan : has
+PetBooking --> JenisLayanan
+PetBooking --> StatusPenitipan
+Hewan --> JenisHewan
+Hewan <|-- Anjing
+Hewan <|-- Kucing
+Hewan <|-- Kelinci
+HewanFactory ..> JenisHewan
+HewanFactory ..> Hewan
+HewanFactory ..> Anjing : creates
+HewanFactory ..> Kucing : creates
+HewanFactory ..> Kelinci : creates
+JenisLayanan ..> BigDecimal
+
+@enduml

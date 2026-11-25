@@ -14,8 +14,6 @@ CREATE TABLE IF NOT EXISTS layanan (
     description    TEXT
 ) ENGINE=InnoDB;
 
-
-
 -- ==========================================================
 -- 2. TABEL DATA PEMILIK HEWAN (pemilik)
 -- ==========================================================

@@ -4,8 +4,7 @@ public enum StatusPenitipan {
     CHECK_IN("Check-In"),
     PERAWATAN("Sedang Dirawat"),
     SIAP_CHECKOUT("Siap Check-Out"),
-    CHECK_OUT("Selesai"),
-    DIBATALKAN("Dibatalkan");
+    CHECK_OUT("Selesai");
 
     private final String label;
 
@@ -22,7 +21,7 @@ public enum StatusPenitipan {
             case CHECK_IN -> PERAWATAN;
             case PERAWATAN -> SIAP_CHECKOUT;
             case SIAP_CHECKOUT -> CHECK_OUT;
-            case CHECK_OUT, DIBATALKAN -> this;
+            case CHECK_OUT -> this;
         };
     }
 }

@@ -1,3 +1,4 @@
+import com.formdev.flatlaf.FlatLightLaf;
 import controller.BookingController;
 import database.BookingDAO;
 import model.Hewan;
@@ -21,7 +22,9 @@ public class Main {
             return;
         }
         boolean databaseMode = args.length > 0 && "--db".equalsIgnoreCase(args[0]);
-        SwingUtilities.invokeLater(() -> launchGui(databaseMode));
+        SwingUtilities.invokeLater(() -> {
+            FlatLightLaf.setup();
+            launchGui(databaseMode);});
     }
 
     private static void launchGui(boolean databaseMode) {

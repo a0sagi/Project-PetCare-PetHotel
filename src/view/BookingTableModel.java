@@ -20,8 +20,7 @@ public class BookingTableModel extends DefaultTableModel {
     private static final Map<String, String> STATUS_LABELS = Map.of(
             "Check-In", "Check-In",
             "Sedang Perawatan", "Sedang Dirawat",
-            "Check-Out", "Selesai",
-            "Dibatalkan", "Dibatalkan");
+            "Check-Out", "Selesai");
 
     public BookingTableModel() {
         super(COLUMNS, 0);
